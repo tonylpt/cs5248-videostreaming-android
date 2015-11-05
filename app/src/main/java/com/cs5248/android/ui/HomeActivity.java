@@ -47,6 +47,12 @@ import rx.schedulers.Schedulers;
 
 public class HomeActivity extends BaseActivity {
 
+    private static final int REQUEST_RECORD_VIDEO = 1;
+
+    private static final int REQUEST_OPEN_VOD = 2;
+
+    private static final int REQUEST_OPEN_LIVE = 3;
+
     @Inject
     StreamingService streamingService;
 
@@ -121,18 +127,33 @@ public class HomeActivity extends BaseActivity {
 
     private void openLive(Video video, int position) {
         Intent intent = new Intent(HomeActivity.this, LiveStreamingActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_OPEN_LIVE);
     }
 
     private void openVod(Video video, int position) {
         Intent intent = new Intent(HomeActivity.this, VodPlaybackActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_OPEN_VOD);
     }
 
     @OnClick(R.id.record_button)
     public void record(View view) {
         Intent intent = new Intent(HomeActivity.this, RecordActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_RECORD_VIDEO);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_RECORD_VIDEO:
+                if(resultCode == RESULT_OK) {
+                    loadVideosFromServer();
+                }
+                break;
+            case REQUEST_OPEN_LIVE:
+                break;
+            case REQUEST_OPEN_VOD:
+                break;
+        }
     }
 
     /**

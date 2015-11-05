@@ -17,6 +17,8 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.OnClick;
+import lombok.Getter;
+import lombok.Setter;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -33,6 +35,10 @@ public class RecordStep1 extends WizardStep<Recording> {
 
     @Bind(R.id.next_button)
     CircularProgressButton progressButton;
+
+    @Setter
+    @Getter
+    private boolean videoCreated;
 
     @Override
     public void initView(View view, Bundle savedInstanceState) {
@@ -62,6 +68,7 @@ public class RecordStep1 extends WizardStep<Recording> {
     }
 
     private void onCreateSuccess(Recording recording) {
+        setVideoCreated(true);
         progressButton.setProgress(100);
 
         // show the success status for a while

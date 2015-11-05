@@ -84,13 +84,14 @@ public class StreamingService {
                 .map(RecordingImpl::new);
     }
 
-    private class RecordingImpl extends Recording {
+    private class RecordingImpl implements Recording {
 
         private Video video;
 
         public RecordingImpl(Video video) {
             this.video = video;
         }
+
     }
 
 }

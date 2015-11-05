@@ -23,6 +23,10 @@ public class RecordActivity extends BaseActivity {
     @Bind(R.id.wizard_view)
     WizardView<Recording> wizardView;
 
+    private RecordStep1 step1 = new RecordStep1();
+
+    private RecordStep2 step2 = new RecordStep2();
+
     @Override
     protected void initActivity(Bundle savedInstanceState) {
         ActionBar actionBar = getSupportActionBar();
@@ -30,13 +34,22 @@ public class RecordActivity extends BaseActivity {
             actionBar.setDisplayHomeAsUpEnabled(false);
         }
 
-        RecordStep1 step1 = new RecordStep1();
-        RecordStep2 step2 = new RecordStep2();
-
         wizardView.setSteps(step1, step2);
-        wizardView.setOnFinishHandler(ignored -> this.finish());
+        wizardView.setOnFinishHandler(this::onFinish);
         wizardView.setPageTransformer(true, new RotateUpTransformer());
         wizardView.setTransitionDuration(1000);
+    }
+
+    private void onFinish(Recording recording) {
+        setResult(RESULT_OK);
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        // if BACK is pressed at step 1, consider the operation cancelled
+        setResult(step1.isVideoCreated() ? RESULT_OK : RESULT_CANCELED);
+        finish();
     }
 
     @Override
