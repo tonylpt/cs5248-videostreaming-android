@@ -1,0 +1,58 @@
+package com.cs5248.android.adapter;
+
+import android.view.View;
+import android.widget.TextView;
+
+import com.cs5248.android.R;
+import com.cs5248.android.model.Video;
+import com.cs5248.android.model.VideoStatus;
+
+import java.text.SimpleDateFormat;
+
+import at.markushi.ui.CircleButton;
+import butterknife.Bind;
+
+/**
+ * @author lpthanh
+ */
+public class VodAdapter extends VideoAdapter {
+
+    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd, yyyy  KK:ss a");
+
+    @Override
+    protected int getItemLayoutId() {
+        return R.layout.item_vod;
+    }
+
+    @Override
+    protected VideoAdapter.VideoViewHolder createViewHolder(View view) {
+        return new ViewHolder(view);
+    }
+
+    protected class ViewHolder extends VideoAdapter.VideoViewHolder {
+
+        @Bind(R.id.status_display)
+        CircleButton statusDisplay;
+
+        @Bind(R.id.id_text)
+        TextView idText;
+
+        @Bind(R.id.title_text)
+        TextView titleText;
+
+        @Bind(R.id.date_text)
+        TextView dateText;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+        }
+
+        @Override
+        protected void display(Video video) {
+            idText.setText(video.getId());
+            titleText.setText(video.getTitle());
+            dateText.setText(dateFormatter.format(video.getCreatedAt()));
+            statusDisplay.setVisibility(video.getStatus() == VideoStatus.ERROR ? View.VISIBLE : View.INVISIBLE);
+        }
+    }
+}

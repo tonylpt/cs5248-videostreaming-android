@@ -1,0 +1,39 @@
+<resources>
+
+    <string name="app_name">CS5248Android</string>
+
+    <string name="title_activity_main">CS5248</string>
+    <string name="title_activity_about">About</string>
+    <string name="title_activity_record">New Recording</string>
+    <string name="title_activity_vod_playback">Video On Demand</string>
+    <string name="title_activity_live_streaming">Live Streaming</string>
+    <string name="title_error">Error</string>
+
+    <string name="action_about">About</string>
+    <string name="about_description"><![CDATA[
+        <p>This application was built as part of the requirements for the course CS5248 at NUS School of Computing.</p>
+        <p>The code was written by the following students:</p>
+        <ul>
+            <li>Thanh</li>
+            <li>Randy</li>
+            <li>Binh</li>
+        </ul>
+    ]]></string>
+
+    <string name="button_create_video">Create Recording</string>
+    <string name="button_create_video_success">Created!</string>
+    <string name="button_create_video_error">Try Again</string>
+
+    <string name="hint_video_title">Enter a Title</string>
+
+    <string name="text_video_refresh_success">Successfully loaded %d items</string>
+    <string name="text_video_refresh_error">Failed to load videos:</string>
+    <string name="text_no_video">There is no video yet…</string>
+    <string name="text_video_error_empty_title">Please enter a title for the video.</string>
+    <string name="text_video_error_server">Failed to create video:</string>
+    <string name="text_ok">OK</string>
+
+    <string name="tab_video_on_demand">Videos On Demand</string>
+    <string name="tab_live_stream">Live Streams</string>
+
+</resources>

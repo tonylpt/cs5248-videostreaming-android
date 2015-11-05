@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:id="@+id/ptr_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#f1f1f1"
+    android:orientation="vertical">
+
+    <com.cs5248.android.util.AdaptiveRecyclerView
+        android:id="@+id/video_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbarStyle="outsideOverlay" />
+
+    <LinearLayout
+        android:id="@+id/empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <net.steamcrafted.materialiconlib.MaterialIconView
+            android:layout_width="match_parent"
+            android:layout_height="128dp"
+            android:layout_marginTop="128dp"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:scaleType="center"
+            app:materialIcon="video_off"
+            app:materialIconColor="@android:color/darker_gray"
+            app:materialIconSize="96dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/text_no_video" />
+
+    </LinearLayout>
+
+</LinearLayout>
