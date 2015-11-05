@@ -41,7 +41,8 @@ dependencies {
 
     compile "com.jakewharton:butterknife:7.0.1"
     compile "io.reactivex:rxandroid:1.0.1"
-    compile 'com.squareup:tape:1.2.3'
+    compile "com.squareup:tape:1.2.3"
+    compile "com.michaelpardo:activeandroid:3.1.0-SNAPSHOT"
     compile "com.squareup.retrofit:retrofit:$retrofitVersion"
     compile "com.squareup.retrofit:converter-jackson:$retrofitVersion"
     compile "com.google.dagger:dagger:$daggerVersion"

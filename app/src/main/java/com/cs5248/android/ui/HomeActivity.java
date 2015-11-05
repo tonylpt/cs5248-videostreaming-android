@@ -24,6 +24,7 @@ import com.cs5248.android.adapter.VideoAdapter;
 import com.cs5248.android.adapter.VodAdapter;
 import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.model.Video;
+import com.cs5248.android.model.cache.VideoListCache;
 import com.cs5248.android.service.StreamingService;
 import com.cs5248.android.util.BaseActivity;
 import com.cs5248.android.util.Util;
@@ -115,6 +116,7 @@ public class HomeActivity extends BaseActivity {
         liveAdapter.setOnItemClickListener(this::openLive);
 
         updatePullToRefreshEnabled();
+        loadVideos();
     }
 
     private void openLive(Video video, int position) {
@@ -133,14 +135,43 @@ public class HomeActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    private void refreshData() {
+    /**
+     * Load the videos temporarily from cache. And then try to load from server.
+     */
+    private void loadVideos() {
+        // first try to load from cache
+        Collection<Video> cached = VideoListCache.load();
+        if (cached != null) {
+            loadVideosIntoUI(cached);
+        }
+
+        // then try to load from server
+        ptrContainer.autoRefresh(true);
+    }
+
+    private void loadVideosFromServer() {
         streamingService.getOnDemandVideos()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::onRefreshSuccess, this::onRefreshFailure);
+                .subscribe(this::onLoadingFromServerSuccess, this::onLoadingFromServerFailure);
     }
 
-    private void onRefreshSuccess(Collection<Video> videos) {
+    private void onLoadingFromServerSuccess(Collection<Video> videos) {
+        VideoListCache.update(videos);
+        loadVideosIntoUI(videos);
+
+        // notify successful
+        Snackbar.make(ptrContainer,
+                getString(R.string.text_video_refresh_success, videos.size()),
+                Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void onLoadingFromServerFailure(Throwable throwable) {
+        ptrContainer.refreshComplete();
+        Util.showErrorMessage(this, getString(R.string.text_video_refresh_error), throwable);
+    }
+
+    private void loadVideosIntoUI(Collection<Video> videos) {
         // filter videos into live and on-demand videos
         ArrayList<Video> odVideos = new ArrayList<>();
         ArrayList<Video> liveVideos = new ArrayList<>();
@@ -161,14 +192,6 @@ public class HomeActivity extends BaseActivity {
         ptrContainer.refreshComplete();
         vodAdapter.setItems(odVideos);
         liveAdapter.setItems(liveVideos);
-        Snackbar.make(ptrContainer,
-                getString(R.string.text_video_refresh_success, videos.size()),
-                Snackbar.LENGTH_SHORT).show();
-    }
-
-    private void onRefreshFailure(Throwable throwable) {
-        ptrContainer.refreshComplete();
-        Util.showErrorMessage(this, getString(R.string.text_video_refresh_error), throwable);
     }
 
     @Override
@@ -272,7 +295,7 @@ public class HomeActivity extends BaseActivity {
 
         @Override
         public void onRefreshBegin(PtrFrameLayout frame) {
-            refreshData();
+            loadVideosFromServer();
         }
     }
 

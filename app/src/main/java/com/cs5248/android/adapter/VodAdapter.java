@@ -49,7 +49,7 @@ public class VodAdapter extends VideoAdapter {
 
         @Override
         protected void display(Video video) {
-            idText.setText(video.getId());
+            idText.setText(String.valueOf(video.getVideoId()));
             titleText.setText(video.getTitle());
             dateText.setText(dateFormatter.format(video.getCreatedAt()));
             statusDisplay.setVisibility(video.getStatus() == VideoStatus.ERROR ? View.VISIBLE : View.INVISIBLE);

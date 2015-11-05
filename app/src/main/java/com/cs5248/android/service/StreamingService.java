@@ -5,6 +5,7 @@ import android.content.Context;
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoStatus;
 import com.cs5248.android.model.VideoType;
+import com.cs5248.android.model.cache.IgnoreAAModelIntrospector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
@@ -25,7 +26,7 @@ import rx.Observable;
  */
 public class StreamingService {
 
-    private static final String WEB_SERVICE_BASE_URL = "http://192.168.43.36:5000";
+    private static final String WEB_SERVICE_BASE_URL = "http://192.168.0.177:5000";
 
     private static final long TIME_OUT = 20000;
 
@@ -42,6 +43,7 @@ public class StreamingService {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.setPropertyNamingStrategy(new PropertyNamingStrategy.LowerCaseWithUnderscoresStrategy());
+        mapper.setAnnotationIntrospector(new IgnoreAAModelIntrospector());
 
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(WEB_SERVICE_BASE_URL)
