@@ -9,6 +9,7 @@ import java.util.Collection;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import timber.log.Timber;
 
 /**
  * This class is for caching the list of videos in the local database for faster access / better
@@ -24,11 +25,15 @@ public class VideoListCache {
      */
     public static Collection<Video> load() {
         try {
-            return new Select()
+            Collection<Video> cached = new Select()
                     .from(Video.class)
                     .execute();
+
+            Timber.d("Successfully queried %d items from cache", cached.size());
+            return cached;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Timber.e(e, "Error querying videos from cache");
+            return null;
         }
     }
 
@@ -48,12 +53,15 @@ public class VideoListCache {
                 }
 
                 ActiveAndroid.setTransactionSuccessful();
+
+                Timber.d("Successfully updated videos into cache");
                 return true;
             } finally {
                 ActiveAndroid.endTransaction();
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Timber.e(e, "Error updating videos into cache");
+            return false;
         }
     }
 }

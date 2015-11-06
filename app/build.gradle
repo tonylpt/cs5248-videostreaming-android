@@ -40,6 +40,7 @@ dependencies {
     compile "com.android.support:cardview-v7:$supportV7Version"
 
     compile "com.jakewharton:butterknife:7.0.1"
+    compile 'com.jakewharton.timber:timber:4.1.0'
     compile "io.reactivex:rxandroid:1.0.1"
     compile "com.squareup:tape:1.2.3"
     compile "com.michaelpardo:activeandroid:3.1.0-SNAPSHOT"
@@ -47,7 +48,7 @@ dependencies {
     compile "com.squareup.retrofit:converter-jackson:$retrofitVersion"
     compile "com.google.dagger:dagger:$daggerVersion"
     compile "org.parceler:parceler-api:$parcelerVersion"
-
+    
     // miscellaneous UI libraries
     compile 'com.ogaclejapan.smarttablayout:library:1.4.2@aar'
     compile 'in.srain.cube:ultra-ptr:1.0.11'

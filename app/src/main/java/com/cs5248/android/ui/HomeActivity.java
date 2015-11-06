@@ -46,6 +46,7 @@ import in.srain.cube.views.ptr.PtrFrameLayout;
 import in.srain.cube.views.ptr.PtrHandler;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+import timber.log.Timber;
 
 public class HomeActivity extends BaseActivity {
 
@@ -175,6 +176,8 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void loadVideosFromServer() {
+        Timber.d("Start loading videos from server");
+
         streamingService.getOnDemandVideos()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -182,6 +185,8 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void onLoadingFromServerSuccess(Collection<Video> videos) {
+        Timber.d("Successfully loaded %d items from server", videos.size());
+
         VideoListCache.update(videos);
         loadVideosIntoUI(videos);
 
@@ -192,6 +197,8 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void onLoadingFromServerFailure(Throwable throwable) {
+        Timber.e(throwable, "Error loading data from server");
+
         ptrContainer.refreshComplete();
         Util.showErrorMessage(this, getString(R.string.text_video_refresh_error), throwable);
     }

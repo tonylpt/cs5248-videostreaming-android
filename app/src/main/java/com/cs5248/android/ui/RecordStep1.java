@@ -17,10 +17,12 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.OnClick;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+import timber.log.Timber;
 
 /**
  * @author lpthanh
@@ -36,8 +38,8 @@ public class RecordStep1 extends WizardStep<Recording> {
     @Bind(R.id.next_button)
     CircularProgressButton progressButton;
 
-    @Setter
     @Getter
+    @Setter(AccessLevel.PRIVATE)
     private boolean videoCreated;
 
     @Override
@@ -68,6 +70,8 @@ public class RecordStep1 extends WizardStep<Recording> {
     }
 
     private void onCreateSuccess(Recording recording) {
+        Timber.d("Successfully created video");
+
         setVideoCreated(true);
         progressButton.setProgress(100);
 
@@ -76,6 +80,8 @@ public class RecordStep1 extends WizardStep<Recording> {
     }
 
     private void onCreateFailure(Throwable throwable) {
+        Timber.e(throwable, "Error creating video");
+
         titleText.setEnabled(true);
         progressButton.setProgress(-1);
         Util.showErrorMessage(getContext(), getString(R.string.text_video_error_server), throwable);

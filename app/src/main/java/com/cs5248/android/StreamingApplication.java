@@ -7,6 +7,8 @@ import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.dagger.ApplicationModule;
 import com.cs5248.android.dagger.DaggerApplicationComponent;
 
+import timber.log.Timber;
+
 /**
  * @author lpthanh
  */
@@ -20,6 +22,9 @@ public class StreamingApplication extends Application {
 
         // for local caching of data
         ActiveAndroid.initialize(this);
+
+        // for logging
+        Timber.plant(new Timber.DebugTree());
 
         applicationComponent = DaggerApplicationComponent.builder()
                 .applicationModule(new ApplicationModule(this))
