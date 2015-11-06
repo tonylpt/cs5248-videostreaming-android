@@ -32,6 +32,8 @@ import com.ogaclejapan.smarttablayout.SmartTabLayout;
 
 import net.steamcrafted.materialiconlib.MaterialDrawableBuilder;
 
+import org.parceler.Parcels;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -127,11 +129,13 @@ public class HomeActivity extends BaseActivity {
 
     private void openLive(Video video, int position) {
         Intent intent = new Intent(HomeActivity.this, LiveStreamingActivity.class);
+        intent.putExtra("video", Parcels.wrap(video));
         startActivityForResult(intent, REQUEST_OPEN_LIVE);
     }
 
     private void openVod(Video video, int position) {
         Intent intent = new Intent(HomeActivity.this, VodPlaybackActivity.class);
+        intent.putExtra("video", Parcels.wrap(video));
         startActivityForResult(intent, REQUEST_OPEN_VOD);
     }
 
@@ -145,7 +149,7 @@ public class HomeActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_RECORD_VIDEO:
-                if(resultCode == RESULT_OK) {
+                if (resultCode == RESULT_OK) {
                     loadVideosFromServer();
                 }
                 break;

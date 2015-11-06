@@ -1,13 +1,19 @@
 package com.cs5248.android.util;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v7.app.AlertDialog;
 
 import com.cs5248.android.R;
 
 import net.steamcrafted.materialiconlib.MaterialDrawableBuilder;
+
+import org.parceler.Parcels;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -51,6 +57,29 @@ public class Util {
 
         throwable.printStackTrace(printWriter);
         return stringWriter.toString();
+    }
+
+    public static <T> T getParcelable(Activity activity, String name, Class<T> parcelableClass) {
+        Intent intent = activity.getIntent();
+        if (intent == null) {
+            return null;
+        }
+
+        Bundle bundle = intent.getExtras();
+        if (bundle == null) {
+            return null;
+        }
+
+        Parcelable parcel = bundle.getParcelable(name);
+        if (parcel == null) {
+            return null;
+        }
+
+        try {
+            return parcelableClass.cast(Parcels.unwrap(parcel));
+        } catch (ClassCastException e) {
+            return null;
+        }
     }
 
 }

@@ -20,6 +20,7 @@ allprojects {
         retrofitVersion = '1.9.0'
         daggerVersion = '2.0.1'
         lombokVersion = '1.16.6'
+        parcelerVersion = '1.0.4'
 
         appVersionCode = 1
         appVersionName = '1.0.0'

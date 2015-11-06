@@ -1,13 +1,18 @@
 package com.cs5248.android.ui;
 
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
+import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
+import com.cs5248.android.model.Video;
 import com.cs5248.android.service.StreamingService;
 import com.cs5248.android.util.BaseActivity;
+import com.cs5248.android.util.Util;
 
 import javax.inject.Inject;
 
@@ -22,6 +27,9 @@ public class VodPlaybackActivity extends BaseActivity {
     @Bind(R.id.play_pause_button)
     Button playPauseButton;
 
+    @Bind(R.id.title_text)
+    TextView titleText;
+
     @Override
     protected void initActivity(Bundle savedInstanceState) {
         ActionBar actionBar = getSupportActionBar();
@@ -29,7 +37,14 @@ public class VodPlaybackActivity extends BaseActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        // other stuff
+        Video video = Util.getParcelable(this, "video", Video.class);
+        if (video != null) {
+            display(video);
+        }
+    }
+
+    private void display(Video video) {
+        titleText.setText(video.getTitle());
     }
 
     @OnClick(R.id.play_pause_button)

@@ -4,20 +4,18 @@ import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
 
+import org.parceler.Parcel;
+
 import java.util.Date;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
  * @author lpthanh
  */
-@AllArgsConstructor(access = AccessLevel.PUBLIC)
-@NoArgsConstructor(access = AccessLevel.PUBLIC)
 @Table(name = "videos", id = "id")
+@Parcel(value = Parcel.Serialization.FIELD, analyze = Video.class) // do not analyze superclass
 public class Video extends Model {
 
     @Getter
