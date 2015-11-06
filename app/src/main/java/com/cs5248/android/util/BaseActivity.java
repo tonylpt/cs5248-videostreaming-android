@@ -2,6 +2,7 @@ package com.cs5248.android.util;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 
 import com.cs5248.android.StreamingApplication;
 import com.cs5248.android.dagger.ApplicationComponent;
@@ -24,6 +25,19 @@ public abstract class BaseActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         initActivity(savedInstanceState);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // this helps to prevent the parent activity from being restarted when
+        // pressing the BACK button on the ActionBar
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     /**
