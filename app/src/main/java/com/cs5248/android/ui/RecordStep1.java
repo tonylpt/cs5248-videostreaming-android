@@ -1,7 +1,6 @@
 package com.cs5248.android.ui;
 
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.widget.EditText;
 
@@ -17,6 +16,7 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.OnClick;
+import butterknife.OnTextChanged;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,8 +35,8 @@ public class RecordStep1 extends WizardStep<Recording> {
     @Bind(R.id.title_text)
     EditText titleText;
 
-    @Bind(R.id.next_button)
-    CircularProgressButton progressButton;
+    @Bind(R.id.create_button)
+    CircularProgressButton createButton;
 
     @Getter
     @Setter(AccessLevel.PRIVATE)
@@ -44,12 +44,19 @@ public class RecordStep1 extends WizardStep<Recording> {
 
     @Override
     public void initView(View view, Bundle savedInstanceState) {
-        progressButton.setIndeterminateProgressMode(true);
+        createButton.setIndeterminateProgressMode(true);
+        onTitleTextChanged();
     }
 
-    @OnClick(R.id.next_button)
-    public void next() {
-        // validate
+    @OnTextChanged(R.id.title_text)
+    void onTitleTextChanged() {
+        // button is enabled only when the title is not empty
+        createButton.setEnabled(!titleText.getText().toString().trim().isEmpty());
+    }
+
+    @OnClick(R.id.create_button)
+    void onCreateButtonClicked() {
+        // validate and reset the title field
         String title = titleText.getText().toString();
         title = title.trim();
         titleText.setText(title);
@@ -61,7 +68,7 @@ public class RecordStep1 extends WizardStep<Recording> {
 
         // update UI
         titleText.setEnabled(false);
-        progressButton.setProgress(50);
+        createButton.setProgress(50);
 
         streamingService.createNewRecording(title)
                 .subscribeOn(Schedulers.io())
@@ -73,17 +80,17 @@ public class RecordStep1 extends WizardStep<Recording> {
         Timber.d("Successfully created video");
 
         setVideoCreated(true);
-        progressButton.setProgress(100);
+        createButton.setProgress(100);
 
         // show the success status for a while
-        new Handler().postDelayed(() -> finishStep(recording), 1000);
+        Util.invokeLater(() -> finishStep(recording), 1000);
     }
 
     private void onCreateFailure(Throwable throwable) {
         Timber.e(throwable, "Error creating video");
 
         titleText.setEnabled(true);
-        progressButton.setProgress(-1);
+        createButton.setProgress(-1);
         Util.showErrorMessage(getContext(), getString(R.string.text_video_error_server), throwable);
     }
 

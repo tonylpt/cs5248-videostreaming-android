@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.support.v7.app.AlertDialog;
 
@@ -20,6 +21,7 @@ import java.io.StringWriter;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import timber.log.Timber;
 
 /**
  * @author lpthanh
@@ -72,14 +74,20 @@ public class Util {
 
         Parcelable parcel = bundle.getParcelable(name);
         if (parcel == null) {
+            Timber.w("Parcelable not found for name '%s'", name);
             return null;
         }
 
         try {
             return parcelableClass.cast(Parcels.unwrap(parcel));
         } catch (ClassCastException e) {
+            Timber.e(e, "Could not cast parcel to class %s", parcelableClass.getName());
             return null;
         }
+    }
+
+    public static void invokeLater(Runnable runnable, long delay) {
+        new Handler().postDelayed(runnable, delay);
     }
 
 }
