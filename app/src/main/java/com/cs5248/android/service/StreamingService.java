@@ -26,7 +26,7 @@ import rx.Observable;
  */
 public class StreamingService {
 
-    private static final String WEB_SERVICE_BASE_URL = "http://192.168.0.177:5000";
+    private static final String WEB_SERVICE_BASE_URL = "http://192.168.0.130:5000";
 
     private static final long TIME_OUT = 20000;
 

@@ -3,6 +3,7 @@ package com.cs5248.android.model;
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.parceler.Parcel;
 
@@ -42,5 +43,43 @@ public class Video extends Model {
     @Getter
     @Column
     private Date createdAt;
+
+    @Setter
+    @Getter
+    @Column
+    private long segmentCount;
+
+    @Setter
+    @Getter
+    @Column
+    private long segmentDuration;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_1_id")
+    private String reprId1;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_2_id")
+    private String reprId2;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_3_id")
+    private String reprId3;
+
+    @Setter
+    @Getter
+    @Column
+    private String uriMpd;
+
+    @Setter
+    @Getter
+    @Column
+    private String uriM3u8;
 
 }
