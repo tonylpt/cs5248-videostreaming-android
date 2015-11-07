@@ -57,21 +57,75 @@ public class Video extends Model {
     @Setter
     @Getter
     @Column
-    @JsonProperty("repr_1_id")
-    private String reprId1;
+    @JsonProperty("repr_1_name")
+    private String repr1Name;
+    
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_1_bandwidth")
+    private String repr1Bandwidth;
 
     @Setter
     @Getter
     @Column
-    @JsonProperty("repr_2_id")
-    private String reprId2;
+    @JsonProperty("repr_1_width")
+    private String repr1Width;
 
     @Setter
     @Getter
     @Column
-    @JsonProperty("repr_3_id")
-    private String reprId3;
+    @JsonProperty("repr_1_height")
+    private String repr1Height;
 
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_2_name")
+    private String repr2Name;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_2_bandwidth")
+    private String repr2Bandwidth;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_2_width")
+    private String repr2Width;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_2_height")
+    private String repr2Height;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_3_name")
+    private String repr3Name;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_3_bandwidth")
+    private String repr3Bandwidth;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_3_width")
+    private String repr3Width;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("repr_3_height")
+    private String repr3Height;
+    
     @Setter
     @Getter
     @Column
