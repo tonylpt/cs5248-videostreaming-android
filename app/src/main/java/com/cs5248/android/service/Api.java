@@ -28,4 +28,6 @@ public interface Api {
     @GET("/segments/{videoId}")
     Observable<List<VideoSegment>> getVideoSegments(@Path("videoId") String videoId);
 
+    @POST("/videosSegment")
+    Observable<VideoSegment> uploadVideoSegment(@Body VideoSegment videoSegment);
 }

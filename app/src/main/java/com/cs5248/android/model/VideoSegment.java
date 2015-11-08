@@ -1,5 +1,7 @@
 package com.cs5248.android.model;
 
+import java.util.List;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,10 +17,14 @@ public class VideoSegment {
 
     @Getter
     @Setter
-    private String videoId;
+    private Long videoId;
 
     @Getter
     @Setter
     private long sequenceIndex;
+
+    @Getter
+    @Setter
+    private List<Byte> videoData;
 
 }
