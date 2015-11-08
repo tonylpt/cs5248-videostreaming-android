@@ -34,7 +34,7 @@
     </com.wrapp.floatlabelededittext.FloatLabeledEditText>
 
     <com.dd.CircularProgressButton
-        android:id="@+id/next_button"
+        android:id="@+id/create_button"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="48dp"
