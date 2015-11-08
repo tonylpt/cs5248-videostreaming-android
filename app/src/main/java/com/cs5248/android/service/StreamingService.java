@@ -26,7 +26,7 @@ import rx.Observable;
  */
 public class StreamingService {
 
-    private static final String WEB_SERVICE_BASE_URL = "http://192.168.0.130:5000";
+    private static final String WEB_SERVICE_BASE_URL = "http://team0320155248.cloudapp.net";
 
     private static final long TIME_OUT = 20000;
 
@@ -38,6 +38,7 @@ public class StreamingService {
         this.context = context;
 
         RequestInterceptor requestInterceptor = request -> {
+            request.addHeader("Cache-control" ,"public,max-age=0");
             request.addHeader("Accept", "application/json");
         };
 
