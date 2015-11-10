@@ -8,7 +8,7 @@
     android:layout_marginBottom="0dp"
     android:layout_marginLeft="15dp"
     android:layout_marginRight="15dp"
-    android:layout_marginTop="25dp"
+    android:layout_marginTop="30dp"
     android:foreground="?android:attr/selectableItemBackground"
     android:orientation="vertical"
 
@@ -18,12 +18,12 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="180dp"
         android:orientation="horizontal">
 
         <com.joooonho.SelectableRoundedImageView
             android:id="@+id/previewer"
-            android:layout_width="80dp"
+            android:layout_width="200dp"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
             android:background="@android:color/darker_gray"
@@ -78,7 +78,7 @@
                 android:layout_toEndOf="@id/status_display"
                 android:text="Video Title"
                 android:textColor="@color/primary_text_default_material_light"
-                android:textSize="20sp" />
+                android:textSize="28sp" />
 
             <TextView
                 android:id="@+id/id_text"
@@ -89,20 +89,20 @@
                 android:paddingTop="3dp"
                 android:text="500"
                 android:textColor="@color/secondary_text_default_material_light"
-                android:textSize="12sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/date_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignTop="@id/id_text"
-                android:layout_marginStart="2dp"
+                android:layout_marginStart="3dp"
                 android:layout_toEndOf="@id/id_text"
                 android:layout_toStartOf="@id/status_display"
                 android:paddingTop="3dp"
                 android:text="25/10/2015 15:50"
                 android:textColor="@color/secondary_text_default_material_light"
-                android:textSize="12sp" />
+                android:textSize="16sp" />
 
         </RelativeLayout>
 
