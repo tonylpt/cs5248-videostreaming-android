@@ -49,6 +49,11 @@ public class Video extends Model {
     @Setter
     @Getter
     @Column
+    private String baseUrl;
+
+    @Setter
+    @Getter
+    @Column
     private long segmentCount;
 
     @Setter
@@ -61,7 +66,7 @@ public class Video extends Model {
     @Column
     @JsonProperty("repr_1_name")
     private String repr1Name;
-    
+
     @Setter
     @Getter
     @Column
@@ -127,7 +132,7 @@ public class Video extends Model {
     @Column
     @JsonProperty("repr_3_height")
     private String repr3Height;
-    
+
     @Setter
     @Getter
     @Column
@@ -139,5 +144,11 @@ public class Video extends Model {
     @Column
     @JsonProperty("uri_m3u8")
     private String uriM3u8;
+
+    @Setter
+    @Getter
+    @Column
+    @JsonProperty("uri_thumbnail")
+    private String uriThumbnail;
 
 }

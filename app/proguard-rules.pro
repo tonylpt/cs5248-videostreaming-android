@@ -22,3 +22,5 @@
 }
 
 -keep class org.parceler.Parceler$$Parcels
+
+-dontwarn com.squareup.okhttp.**

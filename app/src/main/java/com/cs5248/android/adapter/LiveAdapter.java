@@ -1,5 +1,6 @@
 package com.cs5248.android.adapter;
 
+import android.content.Context;
 import android.view.View;
 import android.widget.TextView;
 
@@ -18,6 +19,10 @@ import butterknife.Bind;
 public class LiveAdapter extends VideoAdapter {
 
     private static SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd, yyyy  KK:ss a");
+
+    public LiveAdapter(Context context) {
+        super(context);
+    }
 
     @Override
     protected int getItemLayoutId() {

@@ -2,6 +2,7 @@ package com.cs5248.android.service;
 
 import android.content.Context;
 
+import com.cs5248.android.Config;
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoSegment;
 import com.cs5248.android.model.cache.IgnoreAAModelIntrospector;
@@ -28,9 +29,6 @@ import rx.Observable;
  */
 public class ApiService {
 
-    //    private static final String WEB_SERVICE_BASE_URL = "http://tr-03155248.cloudapp.net";
-    private static final String WEB_SERVICE_BASE_URL = "http://192.168.0.130:5000";
-
     private static final long TIME_OUT = 20000;
 
     private final Api api;
@@ -54,7 +52,7 @@ public class ApiService {
         okHttpClient.setConnectTimeout(TIME_OUT, TimeUnit.MILLISECONDS);
 
         RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(WEB_SERVICE_BASE_URL)
+                .setEndpoint(Config.SERVER_BASE_URL)
                 .setClient(new OkClient(okHttpClient))
                 .setConverter(new JacksonConverter(mapper))
                 .setRequestInterceptor(requestInterceptor)

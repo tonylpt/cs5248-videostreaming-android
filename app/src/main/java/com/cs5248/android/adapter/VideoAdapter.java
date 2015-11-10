@@ -1,5 +1,6 @@
 package com.cs5248.android.adapter;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,9 +20,19 @@ import butterknife.ButterKnife;
 public abstract class VideoAdapter<VH extends VideoAdapter.VideoViewHolder>
         extends RecyclerView.Adapter<VH> {
 
+    private final Context context;
+
     private List<Video> videos = new ArrayList<>();
 
     private OnItemClickListener onItemClickListener;
+
+    public VideoAdapter(Context context) {
+        this.context = context;
+    }
+
+    public Context getContext() {
+        return context;
+    }
 
     public final void setItems(Collection<Video> items) {
         videos.clear();

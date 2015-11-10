@@ -59,7 +59,7 @@ public abstract class Recording {
         Objects.requireNonNull(video.getVideoId());
 
         this.service = service;
-        this.simulationThread = new SimulationThread(context, this, 10, 3000);
+        this.simulationThread = new SimulationThread(context, this, 4, 3000);
         this.video = video;
         this.recordingState = NOT_STARTED;
 
@@ -218,8 +218,18 @@ public abstract class Recording {
             this.interval = interval;
         }
 
+        private static String randomFile() {
+            if (Math.random() > .5) {
+                return "test_video/test_video.mp4";
+            } else {
+                return "test_video/test_video_2.mp4";
+            }
+        }
+
         @Override
         public void run() {
+            String filePath = randomFile();
+
             while (!interrupted() && producedSegment <= totalSegment) {
                 try {
                     Thread.sleep(interval);
@@ -241,7 +251,7 @@ public abstract class Recording {
                         throw new IOException("Unable to create a new file: " + outputFile);
                     }
 
-                    try (InputStream in = assets.open("test_video/test_video.mp4");
+                    try (InputStream in = assets.open(filePath);
                          FileOutputStream out = new FileOutputStream(outputFile)) {
 
                         // copy the file from assets directory to a new file on external storage

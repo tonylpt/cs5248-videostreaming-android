@@ -2,88 +2,110 @@
 <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
 
-    android:orientation="vertical"
     android:id="@+id/video_list_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginBottom="0dp"
+    android:layout_marginLeft="15dp"
+    android:layout_marginRight="15dp"
+    android:layout_marginTop="30dp"
     android:foreground="?android:attr/selectableItemBackground"
-    android:layout_marginLeft="8dp"
-    android:layout_marginRight="8dp"
-    android:layout_marginTop="5dp"
-    android:layout_marginBottom="5dp"
+    android:orientation="vertical"
 
-    app:cardCornerRadius="4dp"
+    app:cardCornerRadius="10dp"
+    app:cardPreventCornerOverlap="false"
     app:cardElevation="@dimen/cardview_default_elevation">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:layout_height="?attr/listPreferredItemHeight"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:gravity="center_vertical"
-        android:orientation="vertical">
+        android:layout_height="180dp"
+        android:orientation="horizontal">
 
-        <at.markushi.ui.CircleButton
-            android:id="@+id/status_display"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:clickable="false"
-            android:src="@android:drawable/stat_notify_error"
-            app:cb_color="#ba89b70b"
-            app:cb_pressedRingWidth="0dp"/>
-
-        <!--
-        <TextView
-            android:id="@+id/status_text"
-            android:layout_width="wrap_content"
+        <com.joooonho.SelectableRoundedImageView
+            android:id="@+id/previewer"
+            android:layout_width="200dp"
             android:layout_height="match_parent"
-            android:layout_alignParentRight="true"
-            android:text="ERROR"
-            android:paddingTop="3dp"
-            android:textColor="@color/secondary_text_default_material_light"
-            android:textSize="@dimen/abc_text_size_caption_material" />
-        -->
+            android:scaleType="centerCrop"
+            android:background="@android:color/darker_gray"
 
-        <TextView
-            android:id="@+id/title_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"
-            android:layout_toEndOf="@id/status_display"
-            android:layout_marginBottom="4dp"
-            android:text="Video Title"
-            android:textColor="@color/primary_text_default_material_light"
-            android:textSize="@dimen/abc_text_size_title_material" />
+            app:sriv_left_top_corner_radius="10dip"
+            app:sriv_right_top_corner_radius="0dip"
+            app:sriv_left_bottom_corner_radius="10dip"
+            app:sriv_right_bottom_corner_radius="0dip"
+            app:sriv_border_width="0dp"
+            app:sriv_border_color="#00000000"
+            app:sriv_oval="false"/>
 
-        <TextView
-            android:id="@+id/id_text"
-            android:layout_width="24dp"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_below="@id/title_text"
-            android:text="500"
-            android:paddingTop="3dp"
-            android:textColor="@color/secondary_text_default_material_light"
-            android:textSize="@dimen/abc_text_size_caption_material" />
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingTop="8dp">
 
-        <TextView
-            android:id="@+id/date_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignTop="@id/id_text"
-            android:layout_toEndOf="@id/id_text"
-            android:layout_toStartOf="@id/status_display"
-            android:text="25/10/2015 15:50"
-            android:paddingTop="3dp"
-            android:layout_marginStart="3dp"
-            android:textColor="@color/secondary_text_default_material_light"
-            android:textSize="@dimen/abc_text_size_caption_material" />
+            <at.markushi.ui.CircleButton
+                android:id="@+id/status_display"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:clickable="false"
+                android:src="@android:drawable/stat_notify_error"
+                app:cb_color="#ba89b70b"
+                app:cb_pressedRingWidth="0dp" />
 
-    </RelativeLayout>
+            <!--
+            <TextView
+                android:id="@+id/status_text"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentRight="true"
+                android:text="ERROR"
+                android:paddingTop="3dp"
+                android:textColor="@color/secondary_text_default_material_light"
+                android:textSize="@dimen/abc_text_size_caption_material" />
+            -->
+
+            <TextView
+                android:id="@+id/title_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginBottom="4dp"
+                android:layout_toEndOf="@id/status_display"
+                android:text="Video Title"
+                android:textColor="@color/primary_text_default_material_light"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/id_text"
+                android:layout_width="24dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/title_text"
+                android:paddingTop="3dp"
+                android:text="500"
+                android:textColor="@color/secondary_text_default_material_light"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/date_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/id_text"
+                android:layout_marginStart="3dp"
+                android:layout_toEndOf="@id/id_text"
+                android:layout_toStartOf="@id/status_display"
+                android:paddingTop="3dp"
+                android:text="25/10/2015 15:50"
+                android:textColor="@color/secondary_text_default_material_light"
+                android:textSize="20sp" />
+
+        </RelativeLayout>
+
+    </LinearLayout>
 
 </android.support.v7.widget.CardView>

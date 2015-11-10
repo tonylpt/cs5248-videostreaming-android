@@ -81,9 +81,9 @@ public class HomeActivity extends BaseActivity {
 
     private VideoListFragment liveFragment = new VideoListFragment();
 
-    private VideoAdapter vodAdapter = new VodAdapter();
+    private VideoAdapter vodAdapter = new VodAdapter(this);
 
-    private VideoAdapter liveAdapter = new LiveAdapter();
+    private VideoAdapter liveAdapter = new LiveAdapter(this);
 
     private ViewPagerAdapter pagerAdapter;
 
