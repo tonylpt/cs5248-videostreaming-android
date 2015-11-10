@@ -11,8 +11,6 @@ import com.cs5248.android.service.event.SegmentUploadStartEvent;
 import com.cs5248.android.service.event.SegmentUploadSuccessEvent;
 import com.path.android.jobqueue.RetryConstraint;
 
-import java.io.IOException;
-
 import timber.log.Timber;
 
 /**
