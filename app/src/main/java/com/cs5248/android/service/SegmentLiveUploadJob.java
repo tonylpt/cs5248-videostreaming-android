@@ -2,6 +2,7 @@ package com.cs5248.android.service;
 
 import com.cs5248.android.StreamingApplication;
 import com.cs5248.android.model.VideoSegment;
+import com.cs5248.android.service.event.SegmentUploadFailureEvent;
 import com.cs5248.android.service.event.SegmentUploadPendedEvent;
 import com.cs5248.android.service.event.SegmentUploadStartEvent;
 import com.cs5248.android.service.event.SegmentUploadSuccessEvent;
@@ -84,6 +85,8 @@ public class SegmentLiveUploadJob extends SegmentUploadJob {
                 Timber.e("Failed to upload segment %d for video %d. Adding it to pending queue.",
                         segment.getVideoId(), segment.getSegmentId());
                 shouldAddPending = true;
+
+                postEvent(new SegmentUploadFailureEvent(segment, e));
             }
         }
 

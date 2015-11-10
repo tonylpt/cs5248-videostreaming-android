@@ -11,12 +11,19 @@ public class SegmentUploadFailureEvent {
 
     private final VideoSegment segment;
 
-    public SegmentUploadFailureEvent(VideoSegment segment) {
+    private final Throwable error;
+
+    public SegmentUploadFailureEvent(VideoSegment segment, Throwable error) {
         this.segment = segment;
+        this.error = error;
     }
 
     public VideoSegment getSegment() {
         return segment;
+    }
+
+    public Throwable getError() {
+        return error;
     }
 
 }

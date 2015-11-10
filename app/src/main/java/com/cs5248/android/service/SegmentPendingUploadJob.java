@@ -2,6 +2,7 @@ package com.cs5248.android.service;
 
 import com.cs5248.android.StreamingApplication;
 import com.cs5248.android.model.VideoSegment;
+import com.cs5248.android.service.event.SegmentUploadFailureEvent;
 import com.cs5248.android.service.event.SegmentUploadStartEvent;
 import com.cs5248.android.service.event.SegmentUploadSuccessEvent;
 import com.path.android.jobqueue.RetryConstraint;
@@ -44,6 +45,7 @@ public class SegmentPendingUploadJob extends SegmentUploadJob {
         try {
             Timber.d("Uploading pended segment %s", segment);
             postEvent(new SegmentUploadStartEvent(segment));
+
             VideoSegment result = service.uploadSegment(segment);
 
             // notify whoever interested in knowing the upload has succeeded
@@ -54,6 +56,9 @@ public class SegmentPendingUploadJob extends SegmentUploadJob {
             // do not retry and enqueue a new task into the Pending queue
             Timber.e("Failed to upload segment %d for video %d. To be retried again.",
                     segment.getVideoId(), segment.getSegmentId());
+
+            postEvent(new SegmentUploadFailureEvent(segment, e));
+
             throw e;
         }
     }
