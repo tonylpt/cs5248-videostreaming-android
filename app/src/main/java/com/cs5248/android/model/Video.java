@@ -11,10 +11,12 @@ import java.util.Date;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * @author lpthanh
  */
+@ToString
 @Table(name = "videos", id = "id")
 @Parcel(value = Parcel.Serialization.FIELD, analyze = Video.class) // do not analyze superclass
 public class Video extends Model {

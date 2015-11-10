@@ -15,7 +15,7 @@ public enum VideoTaskExecutor {
     INSTANCE;
 
     @Inject
-    StreamingService streamingService;
+    ApiService apiService;
 
     RunVideoUploadSchedulerAsyncTask taskUploadScheduler = null;
     String currentVideoId = "0";
@@ -48,7 +48,7 @@ public enum VideoTaskExecutor {
                 VideoSegment videoSegment = new VideoSegment();
                 videoSegment.setVideoId(videoId);
 //                videoSegment.setSequenceIndex(videoSequenceId);
-//                streamingService.uploadVideoSegment(videoSegment);
+//                apiService.uploadVideoSegment(videoSegment);
             }
             catch(Exception e){
                 e.printStackTrace();

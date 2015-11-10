@@ -7,11 +7,11 @@ import com.cs5248.android.model.VideoSegment;
  *
  * @author lpthanh
  */
-public class SegmentUploadedEvent {
+public class SegmentUploadSuccessEvent {
 
     private final VideoSegment segment;
 
-    public SegmentUploadedEvent(VideoSegment segment) {
+    public SegmentUploadSuccessEvent(VideoSegment segment) {
         this.segment = segment;
     }
 

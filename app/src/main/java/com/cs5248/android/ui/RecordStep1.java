@@ -7,7 +7,7 @@ import android.widget.EditText;
 import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.service.Recording;
-import com.cs5248.android.service.StreamingService;
+import com.cs5248.android.service.RecordingService;
 import com.cs5248.android.util.Util;
 import com.cs5248.android.util.WizardStep;
 import com.dd.CircularProgressButton;
@@ -30,7 +30,7 @@ import timber.log.Timber;
 public class RecordStep1 extends WizardStep<Recording> {
 
     @Inject
-    StreamingService streamingService;
+    RecordingService recordingService;
 
     @Bind(R.id.title_text)
     EditText titleText;
@@ -70,7 +70,7 @@ public class RecordStep1 extends WizardStep<Recording> {
         titleText.setEnabled(false);
         createButton.setProgress(50);
 
-        streamingService.createNewRecording(title)
+        recordingService.createNewRecording(title)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::onCreateSuccess, this::onCreateFailure);

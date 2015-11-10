@@ -6,8 +6,8 @@ import com.activeandroid.ActiveAndroid;
 import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.dagger.ApplicationModule;
 import com.cs5248.android.dagger.DaggerApplicationComponent;
+import com.cs5248.android.service.ApiService;
 import com.cs5248.android.service.RecordingService;
-import com.cs5248.android.service.StreamingService;
 import com.path.android.jobqueue.JobManager;
 
 import javax.inject.Inject;
@@ -22,13 +22,13 @@ public class StreamingApplication extends Application {
     private ApplicationComponent applicationComponent;
 
     @Inject
-    private StreamingService streamingService;
+    ApiService apiService;
 
     @Inject
-    private JobManager jobManager;
+    JobManager jobManager;
 
     @Inject
-    private RecordingService recordingService;
+    RecordingService recordingService;
 
 
     @Override
@@ -50,8 +50,8 @@ public class StreamingApplication extends Application {
         return applicationComponent;
     }
 
-    public StreamingService streamingService() {
-        return streamingService;
+    public ApiService apiService() {
+        return apiService;
     }
 
     public JobManager jobManager() {

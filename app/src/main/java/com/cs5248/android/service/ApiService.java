@@ -4,15 +4,12 @@ import android.content.Context;
 
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoSegment;
-import com.cs5248.android.model.VideoStatus;
-import com.cs5248.android.model.VideoType;
 import com.cs5248.android.model.cache.IgnoreAAModelIntrospector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.squareup.okhttp.OkHttpClient;
 
 import java.io.File;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +27,7 @@ import rx.Observable;
  *
  * @author lpthanh
  */
-public class StreamingService {
+public class ApiService {
 
     private static final String WEB_SERVICE_BASE_URL = "http://tr-03155248.cloudapp.net";
 
@@ -40,7 +37,7 @@ public class StreamingService {
 
     private final Context context;
 
-    public StreamingService(Context context) {
+    public ApiService(Context context) {
         this.context = context;
 
         RequestInterceptor requestInterceptor = request -> {
@@ -92,17 +89,10 @@ public class StreamingService {
     /**
      * Create a new video asynchronously.
      */
-    public Observable<Recording> createNewRecording(String title) {
-        Video video = new Video();
-        video.setTitle(title);
-        video.setCreatedAt(new Date());
-        video.setStatus(VideoStatus.EMPTY);
-        video.setType(VideoType.LIVE);
-
+    Observable<Video> createVideo(Video video) {
         return getApi()
                 .createVideo(video)
-                .timeout(TIME_OUT, TimeUnit.MILLISECONDS)
-                .map(RecordingImpl::new);
+                .timeout(TIME_OUT, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -124,31 +114,6 @@ public class StreamingService {
 
     public void markVideoUploadEnd(Long videoId, Long lastSegmentId, Callback<Video> callback) {
         getApi().signalVideoEnd(videoId, lastSegmentId, callback);
-    }
-
-    private class RecordingImpl extends Recording {
-
-        private Video video;
-
-        boolean recording = false;
-
-        public RecordingImpl(Video video) {
-            this.video = video;
-        }
-
-        public void startRecording() {
-            recording = true;
-        }
-
-        public void stopRecording() {
-            recording = false;
-        }
-
-        public void startUploading() {
-            VideoTaskExecutor.INSTANCE.runUploadScheduler(String.valueOf(video.getVideoId()));
-        }
-
-
     }
 
 }

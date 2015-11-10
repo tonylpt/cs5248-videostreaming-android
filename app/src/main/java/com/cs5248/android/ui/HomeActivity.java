@@ -25,7 +25,7 @@ import com.cs5248.android.adapter.VodAdapter;
 import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.cache.VideoListCache;
-import com.cs5248.android.service.StreamingService;
+import com.cs5248.android.service.ApiService;
 import com.cs5248.android.util.BaseActivity;
 import com.cs5248.android.util.Util;
 import com.ogaclejapan.smarttablayout.SmartTabLayout;
@@ -57,7 +57,7 @@ public class HomeActivity extends BaseActivity {
     private static final int REQUEST_OPEN_LIVE = 3;
 
     @Inject
-    StreamingService streamingService;
+    ApiService apiService;
 
     @Bind(R.id.appbar)
     AppBarLayout appBar;
@@ -178,7 +178,7 @@ public class HomeActivity extends BaseActivity {
     private void loadVideosFromServer() {
         Timber.d("Start loading videos from server");
 
-        streamingService.getOnDemandVideos()
+        apiService.getOnDemandVideos()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::onLoadingFromServerSuccess, this::onLoadingFromServerFailure);

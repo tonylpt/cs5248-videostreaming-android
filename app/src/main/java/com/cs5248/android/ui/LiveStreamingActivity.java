@@ -7,7 +7,7 @@ import android.widget.TextView;
 import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.model.Video;
-import com.cs5248.android.service.StreamingService;
+import com.cs5248.android.service.ApiService;
 import com.cs5248.android.util.BaseActivity;
 import com.cs5248.android.util.Util;
 
@@ -19,7 +19,7 @@ import timber.log.Timber;
 public class LiveStreamingActivity extends BaseActivity {
 
     @Inject
-    StreamingService streamingService;
+    ApiService apiService;
 
     @Bind(R.id.title_text)
     TextView titleText;

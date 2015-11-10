@@ -4,9 +4,9 @@ import android.app.Application;
 import android.content.Context;
 
 import com.cs5248.android.BuildConfig;
+import com.cs5248.android.service.ApiService;
 import com.cs5248.android.service.CameraService;
 import com.cs5248.android.service.RecordingService;
-import com.cs5248.android.service.StreamingService;
 import com.path.android.jobqueue.JobManager;
 import com.path.android.jobqueue.config.Configuration;
 import com.path.android.jobqueue.log.CustomLogger;
@@ -37,8 +37,8 @@ public class ApplicationModule {
 
     @Provides
     @Singleton
-    public StreamingService provideStreamingService(Context context) {
-        return new StreamingService(context);
+    public ApiService provideApiService(Context context) {
+        return new ApiService(context);
     }
 
     @Provides
@@ -83,8 +83,11 @@ public class ApplicationModule {
 
     @Provides
     @Singleton
-    public RecordingService provideRecordingService(Context context) {
-        return new RecordingService(context);
+    public RecordingService provideRecordingService(Context context,
+                                                    ApiService service,
+                                                    JobManager jobManager) {
+
+        return new RecordingService(context, service, jobManager);
     }
 
 }

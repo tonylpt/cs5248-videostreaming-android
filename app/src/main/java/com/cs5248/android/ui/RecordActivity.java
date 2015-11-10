@@ -7,7 +7,7 @@ import com.ToxicBakery.viewpager.transforms.RotateUpTransformer;
 import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.service.Recording;
-import com.cs5248.android.service.StreamingService;
+import com.cs5248.android.service.ApiService;
 import com.cs5248.android.util.BaseActivity;
 import com.cs5248.android.util.WizardView;
 
@@ -18,7 +18,7 @@ import butterknife.Bind;
 public class RecordActivity extends BaseActivity {
 
     @Inject
-    StreamingService streamingService;
+    ApiService apiService;
 
     @Bind(R.id.wizard_view)
     WizardView<Recording> wizardView;

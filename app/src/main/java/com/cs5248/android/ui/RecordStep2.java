@@ -7,6 +7,7 @@ import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.service.CameraService;
 import com.cs5248.android.service.Recording;
+import com.cs5248.android.service.RecordingState;
 import com.cs5248.android.util.WizardStep;
 
 import javax.inject.Inject;
@@ -19,11 +20,11 @@ import butterknife.OnClick;
  */
 public class RecordStep2 extends WizardStep<Recording> {
 
-    @Inject
-    CameraService cameraService;
-
-    @Bind(R.id.camera_previewer)
-    CameraPreviewer cameraPreviewer;
+//    @Inject
+//    CameraService cameraService;
+//
+//    @Bind(R.id.camera_previewer)
+//    CameraPreviewer cameraPreviewer;
 
     private Recording currentRecording;
 
@@ -31,7 +32,7 @@ public class RecordStep2 extends WizardStep<Recording> {
 
     @Override
     public void initView(View view, Bundle savedInstanceState) {
-        cameraPreviewer.init(cameraService);
+//        cameraPreviewer.init(cameraService);
     }
 
     @OnClick(R.id.record_button)
@@ -54,8 +55,8 @@ public class RecordStep2 extends WizardStep<Recording> {
     @Override
     protected void startStep(Recording lastResult) {
         currentRecording = lastResult;
-        currentRecording.setPreviewer(cameraPreviewer);
-        cameraPreviewer.start();
+//        currentRecording.setPreviewer(cameraPreviewer);
+//        cameraPreviewer.start();
     }
 
     private void startRecording() {
@@ -84,7 +85,7 @@ public class RecordStep2 extends WizardStep<Recording> {
      * Stop the camera previewer.
      */
     private void endPreviewer() {
-        cameraPreviewer.stop();
+//        cameraPreviewer.stop();
     }
 
     private void displaySummaryScreen() {
@@ -111,15 +112,4 @@ public class RecordStep2 extends WizardStep<Recording> {
         return R.layout.fragment_record_step_2;
     }
 
-    /**
-     * To store the current state of the recorder.
-     */
-    private enum RecordingState {
-
-        NOT_STARTED,
-
-        PROGRESSING,
-
-        ENDED
-    }
 }
