@@ -7,8 +7,8 @@ import com.cs5248.android.dagger.ApplicationComponent;
 import com.cs5248.android.dagger.ApplicationModule;
 import com.cs5248.android.dagger.DaggerApplicationComponent;
 import com.cs5248.android.service.ApiService;
+import com.cs5248.android.service.JobService;
 import com.cs5248.android.service.RecordingService;
-import com.path.android.jobqueue.JobManager;
 
 import javax.inject.Inject;
 
@@ -25,7 +25,7 @@ public class StreamingApplication extends Application {
     ApiService apiService;
 
     @Inject
-    JobManager jobManager;
+    JobService jobService;
 
     @Inject
     RecordingService recordingService;
@@ -44,6 +44,8 @@ public class StreamingApplication extends Application {
         applicationComponent = DaggerApplicationComponent.builder()
                 .applicationModule(new ApplicationModule(this))
                 .build();
+
+        applicationComponent.inject(this);
     }
 
     public ApplicationComponent component() {
@@ -54,8 +56,8 @@ public class StreamingApplication extends Application {
         return apiService;
     }
 
-    public JobManager jobManager() {
-        return jobManager;
+    public JobService jobService() {
+        return jobService;
     }
 
     public RecordingService recordingService() {

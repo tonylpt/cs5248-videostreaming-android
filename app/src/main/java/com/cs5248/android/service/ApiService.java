@@ -13,7 +13,6 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import retrofit.Callback;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.client.OkClient;
@@ -29,7 +28,8 @@ import rx.Observable;
  */
 public class ApiService {
 
-    private static final String WEB_SERVICE_BASE_URL = "http://tr-03155248.cloudapp.net";
+    //    private static final String WEB_SERVICE_BASE_URL = "http://tr-03155248.cloudapp.net";
+    private static final String WEB_SERVICE_BASE_URL = "http://192.168.0.130:5000";
 
     private static final long TIME_OUT = 20000;
 
@@ -112,8 +112,11 @@ public class ApiService {
                 typedFile);
     }
 
-    public void markVideoUploadEnd(Long videoId, Long lastSegmentId, Callback<Video> callback) {
-        getApi().signalVideoEnd(videoId, lastSegmentId, callback);
+    /**
+     * Mark the video end synchronously.
+     */
+    public Video markVideoUploadEnd(Long videoId, Long lastSegmentId) {
+        return getApi().signalVideoEnd(videoId, lastSegmentId);
     }
 
 }

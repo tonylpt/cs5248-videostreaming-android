@@ -68,7 +68,7 @@ public abstract class Recording {
 
     protected abstract void onRecordingStarted(Video video);
 
-    protected abstract void onRecordingEnded(Video video);
+    protected abstract void onRecordingEnded(Video video, VideoSegment lastSegment);
 
     protected abstract void onSegmentRecorded(Video video, VideoSegment segment);
 
@@ -90,9 +90,8 @@ public abstract class Recording {
             return;
         }
 
-        setRecordingState(ENDED);
         simulationThread.stopSimulating();
-        onRecordingEnded(video);
+        recordingEnded();
     }
 
     private void segmentRecorded(VideoSegment segment) {
@@ -102,7 +101,8 @@ public abstract class Recording {
 
     private void recordingEnded() {
         setRecordingState(ENDED);
-        onRecordingEnded(video);
+        onRecordingEnded(video, currentSegment);
+        currentSegment = null;
     }
 
     private void recordingEndedWithError(Throwable error) {
@@ -182,6 +182,10 @@ public abstract class Recording {
         return videoDir;
     }
 
+    public boolean isProgressing() {
+        return getRecordingState() == PROGRESSING;
+    }
+
     public interface StateChangeListener {
 
         void stateChanged(RecordingState newState);
@@ -196,11 +200,11 @@ public abstract class Recording {
 
         private final AssetManager assets;
 
+        private final long interval;
+
         private final int totalSegment;
 
-        private final int producedSegment;
-
-        private final long interval;
+        private int producedSegment;
 
         public SimulationThread(Context context, Recording recording, int totalSegment, long interval) {
             if (totalSegment <= 0) {
@@ -216,7 +220,7 @@ public abstract class Recording {
 
         @Override
         public void run() {
-            while (!interrupted() || producedSegment <= totalSegment) {
+            while (!interrupted() && producedSegment <= totalSegment) {
                 try {
                     Thread.sleep(interval);
                 } catch (InterruptedException e) {
@@ -225,6 +229,9 @@ public abstract class Recording {
 
                 // produce the video file
                 VideoSegment segment = recording.createNextSegment();
+
+                ++producedSegment;
+
                 String fileName = segment.getSegmentId() + "." + segment.getOriginalExtension();
                 File outputFile = new File(recording.recordDir, fileName);
                 segment.setOriginalPath(outputFile.getAbsolutePath());

@@ -1,13 +1,17 @@
-package com.cs5248.android.service;
+package com.cs5248.android.service.job;
 
 import com.cs5248.android.StreamingApplication;
 import com.cs5248.android.model.VideoSegment;
+import com.cs5248.android.service.ApiService;
+import com.cs5248.android.service.JobService;
+import com.cs5248.android.service.RecordingService;
 import com.cs5248.android.service.event.SegmentUploadFailureEvent;
 import com.cs5248.android.service.event.SegmentUploadPendedEvent;
 import com.cs5248.android.service.event.SegmentUploadStartEvent;
 import com.cs5248.android.service.event.SegmentUploadSuccessEvent;
-import com.path.android.jobqueue.JobManager;
 import com.path.android.jobqueue.RetryConstraint;
+
+import java.io.IOException;
 
 import timber.log.Timber;
 
@@ -26,15 +30,13 @@ import timber.log.Timber;
  */
 public class SegmentLiveUploadJob extends SegmentUploadJob {
 
-    public static final String LIVE_JOB_GROUP_ID = "live_segment_upload";
-
     /**
      * If a segment is too far behind the latest segment, it will be pended.
      */
     private static final long LIVE_THRESHOLD = 2;
 
-    public SegmentLiveUploadJob(VideoSegment segment) {
-        super(segment, JobPriority.HIGH, 0, LIVE_JOB_GROUP_ID);
+    public SegmentLiveUploadJob(VideoSegment segment, int segmentDuration) {
+        super(segment, segmentDuration, JobPriority.HIGH, 0, UPLOAD_JOB_GROUP_ID);
     }
 
     @Override
@@ -47,25 +49,21 @@ public class SegmentLiveUploadJob extends SegmentUploadJob {
         StreamingApplication application = getApplication();
         ApiService service = application.apiService();
         RecordingService recordingService = application.recordingService();
-        JobManager jobManager = application.jobManager();
+        JobService jobService = application.jobService();
 
         boolean shouldAddPending = false;
 
         // check if this segment upload should be delayed
-        if (!recordingService.isBeingRecorded(segment.getVideoId())) {
-            shouldAddPending = true;
-        }
-
-        if (!shouldAddPending) {
-            Long onGoingId = recordingService.getCurrentOngoingSegmentId(segment.getVideoId());
-            if (onGoingId == null) {
+        // if the recording is still going on, and the current segment is too far behind
+        // the latest one, add it to the Pending queue.
+        // if the recording is over, and this segment is still in the Live queue, means that
+        // this is the last few segments of a recent recording session, should be sent right now.
+        Long onGoingId = recordingService.getCurrentOngoingSegmentId(segment.getVideoId());
+        if (onGoingId != null) {
+            long gapToLatestSegment = onGoingId - segment.getSegmentId();
+            if (gapToLatestSegment > LIVE_THRESHOLD) {
+                // if this segment is too far behind the latest one
                 shouldAddPending = true;
-            } else {
-                long gapToLatestSegment = onGoingId - segment.getSegmentId();
-                if (gapToLatestSegment > LIVE_THRESHOLD) {
-                    // if this segment is too far behind the latest one
-                    shouldAddPending = true;
-                }
             }
         }
 
@@ -73,6 +71,14 @@ public class SegmentLiveUploadJob extends SegmentUploadJob {
             try {
                 Timber.d("Uploading live segment %s", segment);
                 postEvent(new SegmentUploadStartEvent(segment));
+
+
+                // todo this is for testing, remove this
+                if (segment.getSegmentId() % 3 == 0) {
+                    Timber.d("Faking a fail segment id = %d", segment.getSegmentId());
+                    throw new IOException("Fake error");
+                }
+
 
                 VideoSegment result = service.uploadSegment(segment);
 
@@ -91,8 +97,8 @@ public class SegmentLiveUploadJob extends SegmentUploadJob {
         }
 
         if (shouldAddPending) {
-            SegmentPendingUploadJob pendingUploadJob = new SegmentPendingUploadJob(segment);
-            jobManager.addJob(pendingUploadJob);
+            SegmentPendingUploadJob pendingUploadJob = new SegmentPendingUploadJob(segment, getSegmentDuration());
+            jobService.submitJob(pendingUploadJob);
 
             postEvent(new SegmentUploadPendedEvent(segment));
         }

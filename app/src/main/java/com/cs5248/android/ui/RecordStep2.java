@@ -2,15 +2,13 @@ package com.cs5248.android.ui;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 
 import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
-import com.cs5248.android.service.CameraService;
 import com.cs5248.android.service.Recording;
 import com.cs5248.android.service.RecordingState;
 import com.cs5248.android.util.WizardStep;
-
-import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.OnClick;
@@ -26,9 +24,10 @@ public class RecordStep2 extends WizardStep<Recording> {
 //    @Bind(R.id.camera_previewer)
 //    CameraPreviewer cameraPreviewer;
 
-    private Recording currentRecording;
+    private Recording recording;
 
-    private RecordingState currentState;
+    @Bind(R.id.record_button)
+    Button recordButton;
 
     @Override
     public void initView(View view, Bundle savedInstanceState) {
@@ -37,7 +36,7 @@ public class RecordStep2 extends WizardStep<Recording> {
 
     @OnClick(R.id.record_button)
     public void onRecordClicked() {
-        switch (currentState) {
+        switch (recording.getRecordingState()) {
             case NOT_STARTED:
                 startRecording();
                 break;
@@ -54,30 +53,22 @@ public class RecordStep2 extends WizardStep<Recording> {
 
     @Override
     protected void startStep(Recording lastResult) {
-        currentRecording = lastResult;
-//        currentRecording.setPreviewer(cameraPreviewer);
+        recording = lastResult;
+        recording.setStateChangeListener(new RecordingStateChangeListener());
+
+//        recording.setPreviewer(cameraPreviewer);
 //        cameraPreviewer.start();
     }
 
     private void startRecording() {
-        if(currentState != RecordingState.NOT_STARTED) {
-            return;
-        }
-
-        currentState = RecordingState.PROGRESSING;
-        currentRecording.startRecording();
+        recording.startRecording();
     }
 
     /**
      * End the current recording (the preview may still be going on).
      */
     private void endRecording() {
-        if (currentState != RecordingState.PROGRESSING) {
-            return;
-        }
-
-        currentState = RecordingState.ENDED;
-        currentRecording.endRecording();
+        recording.endRecording();
         displaySummaryScreen();
     }
 
@@ -92,13 +83,17 @@ public class RecordStep2 extends WizardStep<Recording> {
         endPreviewer();
 
         // just quit for now
-        finishStep(currentRecording);
+        finishStep(recording);
     }
 
     @Override
     public void onPause() {
         // end the recording when the activity is paused, if it's still going on
-        endRecording();
+        Recording recording = this.recording;
+        if (recording != null && recording.isProgressing()) {
+            endRecording();
+        }
+
         super.onPause();
     }
 
@@ -112,4 +107,13 @@ public class RecordStep2 extends WizardStep<Recording> {
         return R.layout.fragment_record_step_2;
     }
 
+    private class RecordingStateChangeListener implements Recording.StateChangeListener {
+
+        @Override
+        public void stateChanged(RecordingState newState) {
+            getActivity().runOnUiThread(() -> {
+                recordButton.setText("State: " + newState);
+            });
+        }
+    }
 }

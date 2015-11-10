@@ -2,6 +2,8 @@ package com.cs5248.android.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -10,7 +12,7 @@ import lombok.ToString;
  * @author lpthanh
  */
 @ToString
-public class VideoSegment {
+public class VideoSegment implements Serializable {
 
     @Getter
     @Setter

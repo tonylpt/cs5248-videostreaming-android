@@ -1,7 +1,9 @@
-package com.cs5248.android.service;
+package com.cs5248.android.service.job;
 
 import com.cs5248.android.StreamingApplication;
 import com.cs5248.android.model.VideoSegment;
+import com.cs5248.android.service.ApiService;
+import com.cs5248.android.service.SegmentUploadException;
 import com.cs5248.android.service.event.SegmentUploadFailureEvent;
 import com.cs5248.android.service.event.SegmentUploadStartEvent;
 import com.cs5248.android.service.event.SegmentUploadSuccessEvent;
@@ -26,10 +28,11 @@ import timber.log.Timber;
  */
 public class SegmentPendingUploadJob extends SegmentUploadJob {
 
-    public static final String PENDING_JOB_GROUP_ID = "pending_segment_upload";
-
-    public SegmentPendingUploadJob(VideoSegment segment) {
-        super(segment, JobPriority.LOW, 1000, PENDING_JOB_GROUP_ID);
+    public SegmentPendingUploadJob(VideoSegment segment, int segmentDuration) {
+        // delay this job for longer than a segment duration just so it does not
+        // have a chance to run while there are still incoming Live jobs
+        // update: no need to delay since we have two job managers now.
+        super(segment, segmentDuration, JobPriority.HIGH, 0, UPLOAD_JOB_GROUP_ID);
     }
 
     @Override

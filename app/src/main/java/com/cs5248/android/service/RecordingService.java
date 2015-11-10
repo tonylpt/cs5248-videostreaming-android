@@ -6,7 +6,8 @@ import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoSegment;
 import com.cs5248.android.model.VideoStatus;
 import com.cs5248.android.model.VideoType;
-import com.path.android.jobqueue.JobManager;
+import com.cs5248.android.service.job.SegmentLiveUploadJob;
+import com.cs5248.android.service.job.VideoEndJob;
 
 import java.util.Date;
 
@@ -17,20 +18,25 @@ import rx.Observable;
  */
 public class RecordingService {
 
+    private static final int SEGMENT_DURATION = 3000;
+
     private final Context context;
 
     private final ApiService apiService;
 
-    private final JobManager jobManager;
+    private final JobService jobService;
 
     private Video currentVideo;
 
     private VideoSegment currentSegment;
 
-    public RecordingService(Context context, ApiService apiService, JobManager jobManager) {
+    public RecordingService(Context context,
+                            ApiService apiService,
+                            JobService jobService) {
+
         this.context = context;
         this.apiService = apiService;
-        this.jobManager = jobManager;
+        this.jobService = jobService;
     }
 
     public void setCurrent(Video currentVideo, VideoSegment currentSegment) {
@@ -69,6 +75,10 @@ public class RecordingService {
         return currentSegment.getSegmentId();
     }
 
+    public int getSegmentDuration() {
+        return SEGMENT_DURATION;
+    }
+
     public Observable<Recording> createNewRecording(String title) {
         Video video = new Video();
         video.setTitle(title);
@@ -90,11 +100,16 @@ public class RecordingService {
         @Override
         protected void onRecordingStarted(Video video) {
             setCurrent(video, null);
+            jobService.setUrgentMode(true);
         }
 
         @Override
-        protected void onRecordingEnded(Video video) {
+        protected void onRecordingEnded(Video video, VideoSegment lastSegment) {
             setCurrent(null, null);
+
+            // mark video ends
+            jobService.submitJob(new VideoEndJob(video.getVideoId(), lastSegment.getSegmentId()));
+            jobService.setUrgentMode(false);
         }
 
         @Override
@@ -102,7 +117,7 @@ public class RecordingService {
             setCurrent(video, segment);
 
             // upload the segment
-            jobManager.addJob(new SegmentLiveUploadJob(segment));
+            jobService.submitUrgentJob(new SegmentLiveUploadJob(segment, getSegmentDuration()));
         }
     }
 

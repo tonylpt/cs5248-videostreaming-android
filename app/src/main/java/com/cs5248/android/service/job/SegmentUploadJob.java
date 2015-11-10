@@ -1,13 +1,9 @@
-package com.cs5248.android.service;
+package com.cs5248.android.service.job;
 
-import com.cs5248.android.StreamingApplication;
 import com.cs5248.android.model.VideoSegment;
-import com.path.android.jobqueue.Job;
-import com.path.android.jobqueue.Params;
 
 import java.io.File;
 
-import de.greenrobot.event.EventBus;
 import timber.log.Timber;
 
 /**
@@ -23,33 +19,31 @@ import timber.log.Timber;
  *
  * @author lpthanh
  */
-abstract class SegmentUploadJob extends Job {
+abstract class SegmentUploadJob extends UsingNetworkJob {
+
+    static final String UPLOAD_JOB_GROUP_ID = "job.segments";
 
     private VideoSegment segment;
 
-    public SegmentUploadJob(VideoSegment segment, int priority, int delayMillis, String groupId) {
-        super(new Params(priority)
-                        .requireNetwork()
-                        .persist()
-                        .delayInMs(delayMillis)
-                        .groupBy(groupId)
-        );
+    private int segmentDuration;
 
+    public SegmentUploadJob(VideoSegment segment,
+                            int segmentDuration,
+                            int priority,
+                            int delayMillis,
+                            String groupId) {
+
+        super(priority, delayMillis, groupId);
         this.segment = segment;
+        this.segmentDuration = segmentDuration;
     }
 
     public VideoSegment getSegment() {
         return segment;
     }
 
-    @Override
-    public void onAdded() {
-        // job has been secured to disk, add item to database
-        Timber.d("Upload job has been persisted to disk. Job class=%s", getClass().getName());
-    }
-
-    protected StreamingApplication getApplication() {
-        return (StreamingApplication) getApplicationContext();
+    public int getSegmentDuration() {
+        return segmentDuration;
     }
 
     protected final void cleanUpSegmentFile() {
@@ -69,12 +63,9 @@ abstract class SegmentUploadJob extends Job {
         }
     }
 
-    protected final void postEvent(Object event) {
-        EventBus.getDefault().post(event);
-    }
-
     @Override
     protected void onCancel() {
+        super.onCancel();
         cleanUpSegmentFile();
     }
 

@@ -5,7 +5,6 @@ import com.cs5248.android.model.VideoSegment;
 
 import java.util.List;
 
-import retrofit.Callback;
 import retrofit.http.Body;
 import retrofit.http.Field;
 import retrofit.http.FormUrlEncoded;
@@ -46,8 +45,7 @@ public interface Api {
 
     @FormUrlEncoded
     @POST("/video_end/{video_id}")
-    void signalVideoEnd(@Path("video_id") Long videoId,
-                        @Field("last_segment_id") Long lastSegmentId,
-                        Callback<Video> callback);
+    Video signalVideoEnd(@Path("video_id") Long videoId,
+                         @Field("last_segment_id") Long lastSegmentId);
 
 }

@@ -1,4 +1,4 @@
-package com.cs5248.android.service;
+package com.cs5248.android.service.job;
 
 /**
  * @author lpthanh
