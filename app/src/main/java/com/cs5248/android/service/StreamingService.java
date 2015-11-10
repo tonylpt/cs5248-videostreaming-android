@@ -71,18 +71,27 @@ public class StreamingService {
         return this.api;
     }
 
+    /**
+     * Query all VODs asynchronously.
+     */
     public Observable<List<Video>> getOnDemandVideos() {
         return getApi()
                 .getOnDemandVideos()
                 .timeout(TIME_OUT, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Query all live streams asynchronously.
+     */
     public Observable<List<Video>> getLiveStreams() {
         return getApi()
                 .getLiveStreams()
                 .timeout(TIME_OUT, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Create a new video asynchronously.
+     */
     public Observable<Recording> createNewRecording(String title) {
         Video video = new Video();
         video.setTitle(title);
@@ -96,7 +105,10 @@ public class StreamingService {
                 .map(RecordingImpl::new);
     }
 
-    public void uploadSegment(VideoSegment input, Callback<VideoSegment> callback) throws SegmentUploadException {
+    /**
+     * Upload a segment synchronously.
+     */
+    public VideoSegment uploadSegment(VideoSegment input) throws SegmentUploadException {
         File file = new File(input.getOriginalPath());
         if (!file.exists() || !file.isFile()) {
             throw new SegmentUploadException("File does not exist: " + file.getAbsolutePath(), input);
@@ -104,11 +116,10 @@ public class StreamingService {
 
         TypedFile typedFile = new TypedFile("multipart/form-data", file);
 
-        getApi().createSegment(input.getVideoId(),
+        return getApi().createSegment(input.getVideoId(),
                 input.getSegmentId(),
                 input.getOriginalExtension(),
-                typedFile,
-                callback);
+                typedFile);
     }
 
     public void markVideoUploadEnd(Long videoId, Long lastSegmentId, Callback<Video> callback) {

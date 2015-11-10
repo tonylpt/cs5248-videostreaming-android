@@ -34,13 +34,15 @@ public interface Api {
     @GET("/segments/{videoId}")
     Observable<List<VideoSegment>> getVideoSegments(@Path("videoId") String videoId);
 
+    /**
+     * Since this will be executed within a job queue, it does not need to be async.
+     */
     @Multipart
     @POST("/video_segment/{video_id}")
-    void createSegment(@Path("video_id") Long videoId,
-                       @Part("segment_id") Long segmentId,
-                       @Part("original_extension") String extension,
-                       @Part("data") TypedFile segmentFile,
-                       Callback<VideoSegment> callback);
+    VideoSegment createSegment(@Path("video_id") Long videoId,
+                               @Part("segment_id") Long segmentId,
+                               @Part("original_extension") String extension,
+                               @Part("data") TypedFile segmentFile);
 
     @FormUrlEncoded
     @POST("/video_end/{video_id}")
