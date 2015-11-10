@@ -3,6 +3,7 @@ package com.cs5248.android.dagger;
 import android.app.Application;
 import android.content.Context;
 
+import com.cs5248.android.service.CameraService;
 import com.cs5248.android.service.StreamingService;
 
 import javax.inject.Singleton;
@@ -32,6 +33,12 @@ public class ApplicationModule {
     @Singleton
     public StreamingService provideStreamingService(Context context) {
         return new StreamingService(context);
+    }
+
+    @Provides
+    @Singleton
+    public CameraService provideCameraService() {
+        return new CameraService();
     }
 
 }

@@ -2,13 +2,11 @@ package com.cs5248.android.service;
 
 import android.content.Context;
 
-import com.cs5248.android.R;
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoSegment;
 import com.cs5248.android.model.VideoStatus;
 import com.cs5248.android.model.VideoType;
 import com.cs5248.android.model.cache.IgnoreAAModelIntrospector;
-import com.cs5248.android.service.CameraService.CameraPreview;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
@@ -16,7 +14,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import butterknife.Bind;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.converter.JacksonConverter;
@@ -42,7 +39,7 @@ public class StreamingService {
         this.context = context;
 
         RequestInterceptor requestInterceptor = request -> {
-            request.addHeader("Cache-control" ,"public,max-age=0");
+            request.addHeader("Cache-control", "public,max-age=0");
             request.addHeader("Accept", "application/json");
         };
 
@@ -89,35 +86,31 @@ public class StreamingService {
                 .map(RecordingImpl::new);
     }
 
-    public Observable<VideoSegment> uploadVideoSegment(VideoSegment videoSegment){
+    public Observable<VideoSegment> uploadVideoSegment(VideoSegment videoSegment) {
         return getApi().uploadVideoSegment(videoSegment).timeout(TIME_OUT, TimeUnit.MILLISECONDS);
 
     }
 
 
-    private class RecordingImpl implements Recording {
+    private class RecordingImpl extends Recording {
 
         private Video video;
-        @Bind(R.id.camera_preview)
-        CameraService cameraService;
+
         boolean recording = false;
 
         public RecordingImpl(Video video) {
             this.video = video;
-            cameraService = new CameraService(context,video.getVideoId());
         }
 
-        public void startRecording(){
-            cameraService.startRecording();
+        public void startRecording() {
             recording = true;
         }
 
-        public void stopRecording(){
-            cameraService.stopRecording();
+        public void stopRecording() {
             recording = false;
         }
 
-        public void startUploading(){
+        public void startUploading() {
             VideoTaskExecutor.INSTANCE.runUploadScheduler(String.valueOf(video.getVideoId()));
         }
 

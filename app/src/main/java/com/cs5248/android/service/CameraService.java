@@ -35,7 +35,7 @@ import java.util.List;
 
 public class CameraService {
 
-    private CameraPreview cameraPreview;
+//    private CameraPreview cameraPreview;
     private Encoder encoder;
     private Mp4ContainerWriter mp4Writer;
     private static final int frameWidth = 1280;
@@ -57,30 +57,34 @@ public class CameraService {
     private Object doneOneSegmentMutex = null;
     BufferedOutputStream outputStream = null;
 
-    public CameraService(Context context,Long videoId){//}, Object doneOneSegmentMutex) {
+    public CameraService() {
+
+    }
+
+    public CameraService(Context context, Long videoId) {//}, Object doneOneSegmentMutex) {
         //this.doneOneSegmentMutex = doneOneSegmentMutex;
         encoder = new Encoder();
         this.videoId = videoId;
         mp4Writer = new Mp4ContainerWriter();
         videoSegmentsData = new ArrayList<>();
-        cameraPreview = new CameraPreview(context);
+//        cameraPreview = new CameraPreview(context);
     }
 
     public void startRecording() {
-        cameraPreview.startRecording();
+//        cameraPreview.startRecording();
     }
 
     public void stopRecording() {
-        cameraPreview.startRecording();
+//        cameraPreview.startRecording();
     }
 
     public List<Byte> getLatestSegmentData() {
-        return videoSegmentsData.get(videoSegmentsData.size()-1);
+        return videoSegmentsData.get(videoSegmentsData.size() - 1);
     }
 
-    public void receiveCameraFrameCallback(byte[] data){
-        if(outputStream == null){
-            try{
+    public void receiveCameraFrameCallback(byte[] data) {
+        if (outputStream == null) {
+            try {
                 long currentTime = System.nanoTime();
                 desiredEnd = currentTime + secondPerSegment * 1000000000L;
                 String filename = String.valueOf(videoSequenceId);
@@ -88,25 +92,22 @@ public class CameraService {
                 this.currentEncoderOutputFileName = filename;
                 String encoderOutputPath = pathPrefix + filename + ".h264";
                 outputStream = new BufferedOutputStream(new FileOutputStream(encoderOutputPath));
-            }
-            catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-        else{
+        } else {
             byte[] encoderOutput = encoder.offerEncoder(data);
-            if(encoderOutput != null) {
+            if (encoderOutput != null) {
                 try {
                     outputStream.write(encoderOutput, 0, encoderOutput.length);
-                    if( System.nanoTime() > desiredEnd){
+                    if (System.nanoTime() > desiredEnd) {
                         outputStream.close();
                         outputStream = null;
                         mp4Writer.writeVideoFile(pathPrefix + currentEncoderOutputFileName + ".h264",
                                 pathPrefix + currentEncoderOutputFileName + ".mp4");
                         Log.d("Write file", "Yay");
                     }
-                }
-                catch(Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -144,8 +145,8 @@ public class CameraService {
 //        }
 //    }
 
-    public static class Mp4ContainerWriter{
-        public void writeVideoFile(String input,String output){
+    public static class Mp4ContainerWriter {
+        public void writeVideoFile(String input, String output) {
             try {
                 H264TrackImpl h264Track = new H264TrackImpl(new FileDataSourceImpl(input));
                 Movie movie = new Movie();
@@ -154,14 +155,13 @@ public class CameraService {
                 FileChannel fc = new FileOutputStream(new File(output)).getChannel();
                 mp4file.writeContainer(fc);
                 fc.close();
-            }
-            catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private class Encoder{
+    private class Encoder {
         private MediaCodec mediaCodec;
         private byte[] sps;
         private byte[] pps;
@@ -176,8 +176,7 @@ public class CameraService {
                 mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
                 mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
                 mediaCodec.start();
-            }
-            catch(IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
 
@@ -191,7 +190,7 @@ public class CameraService {
 
         private byte[] offerEncoder(byte[] data) {
             try {
-                byte[] input = swapYV12toI420(data,frameWidth,frameHeight);
+                byte[] input = swapYV12toI420(data, frameWidth, frameHeight);
                 ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers();
                 int inputBufferIndex = mediaCodec.dequeueInputBuffer(-1);
                 if (inputBufferIndex >= 0) {
@@ -225,101 +224,16 @@ public class CameraService {
 
         private byte[] swapYV12toI420(byte[] yv12bytes, int width, int height) {
             byte[] i420bytes = new byte[yv12bytes.length];
-            for (int i = 0; i < width*height; i++)
+            for (int i = 0; i < width * height; i++)
                 i420bytes[i] = yv12bytes[i];
-            for (int i = width*height; i < width*height + (width/2*height/2); i++)
-                i420bytes[i] = yv12bytes[i + (width/2*height/2)];
-            for (int i = width*height + (width/2*height/2); i < width*height + 2*(width/2*height/2); i++)
-                i420bytes[i] = yv12bytes[i - (width/2*height/2)];
+            for (int i = width * height; i < width * height + (width / 2 * height / 2); i++)
+                i420bytes[i] = yv12bytes[i + (width / 2 * height / 2)];
+            for (int i = width * height + (width / 2 * height / 2); i < width * height + 2 * (width / 2 * height / 2); i++)
+                i420bytes[i] = yv12bytes[i - (width / 2 * height / 2)];
             return i420bytes;
         }
 
     }
 
-     class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
-        private SurfaceHolder mHolder;
-        private Camera mCamera;
-        public CameraPreview(Context context) {
-            super(context);
-            mCamera = initCamera(frameWidth,frameHeight,fps);
-            mHolder = getHolder();
-            mHolder.addCallback(this);
-            mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        }
 
-         public Camera initCamera(int frameWidth,int frameHeight,int fps){
-             Camera camera = null;
-             Camera.CameraInfo info = new Camera.CameraInfo();
-             int numCameras = Camera.getNumberOfCameras();
-             for (int i = 0; i < numCameras; i++) {
-                 Camera.getCameraInfo(i, info);
-                 if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-                     camera = Camera.open(i);
-                     break;
-                 }
-             }
-             if (camera == null) {
-                 camera = Camera.open();
-             }
-             if (camera == null) {
-                 throw new RuntimeException("Unable to open camera");
-             }
-
-             Camera.Parameters parms = camera.getParameters();
-             parms.setPreviewFormat(ImageFormat.YV12);
-             parms.setPreviewSize(frameWidth, frameHeight);
-             parms.setPreviewFrameRate(fps);
-             camera.setParameters(parms);
-
-             return camera;
-         }
-
-         public void startRecording(){
-             mCamera.startPreview();
-         }
-
-         public void stopRecording(){
-             mCamera.stopPreview();
-         }
-
-         public void surfaceCreated(SurfaceHolder holder) {
-            try {
-                mCamera.setPreviewDisplay(holder);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void surfaceDestroyed(SurfaceHolder holder) {
-        }
-
-        public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-            if (mHolder.getSurface() == null) {
-                return;
-            }
-            // stop preview before making changes
-            try {
-                //mCamera.stopPreview();
-            } catch (Exception e) {
-                e.printStackTrace();
-                // ignore: tried to stop a non-existent preview
-            }
-
-            try {
-                mCamera.setPreviewCallback(new Camera.PreviewCallback() {
-                    long lastMark = SystemClock.elapsedRealtime();
-                    long counter = 0;
-
-                    @Override
-                    public void onPreviewFrame(byte[] data, Camera camera) {
-
-                        receiveCameraFrameCallback(data);
-                    }
-                });
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 }
