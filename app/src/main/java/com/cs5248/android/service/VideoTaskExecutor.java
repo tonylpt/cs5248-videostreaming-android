@@ -47,8 +47,8 @@ public enum VideoTaskExecutor {
                 byte[] videoData = readFile(videoFolder + filename);
                 VideoSegment videoSegment = new VideoSegment();
                 videoSegment.setVideoId(videoId);
-                videoSegment.setSequenceIndex(videoSequenceId);
-                streamingService.uploadVideoSegment(videoSegment);
+//                videoSegment.setSequenceIndex(videoSequenceId);
+//                streamingService.uploadVideoSegment(videoSegment);
             }
             catch(Exception e){
                 e.printStackTrace();

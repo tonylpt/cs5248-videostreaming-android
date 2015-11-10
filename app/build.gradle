@@ -47,6 +47,7 @@ dependencies {
     compile "com.michaelpardo:activeandroid:3.1.0-SNAPSHOT"
     compile "com.squareup.retrofit:retrofit:$retrofitVersion"
     compile "com.squareup.retrofit:converter-jackson:$retrofitVersion"
+    compile "com.squareup.okhttp:okhttp:2.5.0"
     compile "com.google.dagger:dagger:$daggerVersion"
     compile "org.parceler:parceler-api:$parcelerVersion"
     

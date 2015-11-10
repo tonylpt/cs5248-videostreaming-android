@@ -11,6 +11,11 @@ public enum VideoStatus {
     EMPTY,
 
     /**
+     * The video is being uploaded.
+     */
+    UPLOADING,
+
+    /**
      * Successfully uploaded and processed.
      */
     OK,

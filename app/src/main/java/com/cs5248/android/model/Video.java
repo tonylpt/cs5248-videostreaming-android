@@ -129,11 +129,13 @@ public class Video extends Model {
     @Setter
     @Getter
     @Column
+    @JsonProperty("uri_mpd")
     private String uriMpd;
 
     @Setter
     @Getter
     @Column
+    @JsonProperty("uri_m3u8")
     private String uriM3u8;
 
 }

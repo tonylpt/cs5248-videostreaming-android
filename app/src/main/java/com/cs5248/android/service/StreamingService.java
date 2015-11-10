@@ -9,14 +9,19 @@ import com.cs5248.android.model.VideoType;
 import com.cs5248.android.model.cache.IgnoreAAModelIntrospector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.squareup.okhttp.OkHttpClient;
 
+import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import retrofit.Callback;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
+import retrofit.client.OkClient;
 import retrofit.converter.JacksonConverter;
+import retrofit.mime.TypedFile;
 import rx.Observable;
 
 /**
@@ -27,7 +32,7 @@ import rx.Observable;
  */
 public class StreamingService {
 
-    private static final String WEB_SERVICE_BASE_URL = "http://team0320155248.cloudapp.net";
+    private static final String WEB_SERVICE_BASE_URL = "http://tr-03155248.cloudapp.net";
 
     private static final long TIME_OUT = 20000;
 
@@ -47,11 +52,16 @@ public class StreamingService {
         mapper.setPropertyNamingStrategy(new PropertyNamingStrategy.LowerCaseWithUnderscoresStrategy());
         mapper.setAnnotationIntrospector(new IgnoreAAModelIntrospector());
 
+        final OkHttpClient okHttpClient = new OkHttpClient();
+        okHttpClient.setReadTimeout(TIME_OUT, TimeUnit.MILLISECONDS);
+        okHttpClient.setConnectTimeout(TIME_OUT, TimeUnit.MILLISECONDS);
+
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(WEB_SERVICE_BASE_URL)
+                .setClient(new OkClient(okHttpClient))
                 .setConverter(new JacksonConverter(mapper))
                 .setRequestInterceptor(requestInterceptor)
-                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setLogLevel(RestAdapter.LogLevel.BASIC)
                 .build();
 
         api = restAdapter.create(Api.class);
@@ -86,11 +96,24 @@ public class StreamingService {
                 .map(RecordingImpl::new);
     }
 
-    public Observable<VideoSegment> uploadVideoSegment(VideoSegment videoSegment) {
-        return getApi().uploadVideoSegment(videoSegment).timeout(TIME_OUT, TimeUnit.MILLISECONDS);
+    public void uploadSegment(VideoSegment input, Callback<VideoSegment> callback) throws SegmentUploadException {
+        File file = new File(input.getOriginalPath());
+        if (!file.exists() || !file.isFile()) {
+            throw new SegmentUploadException("File does not exist: " + file.getAbsolutePath(), input);
+        }
 
+        TypedFile typedFile = new TypedFile("multipart/form-data", file);
+
+        getApi().createSegment(input.getVideoId(),
+                input.getSegmentId(),
+                input.getOriginalExtension(),
+                typedFile,
+                callback);
     }
 
+    public void markVideoUploadEnd(Long videoId, Long lastSegmentId, Callback<Video> callback) {
+        getApi().signalVideoEnd(videoId, lastSegmentId, callback);
+    }
 
     private class RecordingImpl extends Recording {
 
