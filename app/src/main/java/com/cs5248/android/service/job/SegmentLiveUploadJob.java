@@ -72,13 +72,13 @@ public class SegmentLiveUploadJob extends SegmentUploadJob {
                 Timber.d("Uploading live segment %s", segment);
                 postEvent(new SegmentUploadStartEvent(segment));
 
-
-                // todo this is for testing, remove this
+                /*
+                // this is for testing to simulate failed segments
                 if (segment.getSegmentId() % 3 == 0) {
                     Timber.d("Faking a fail segment id = %d", segment.getSegmentId());
                     throw new IOException("Fake error");
                 }
-
+                */
 
                 VideoSegment result = service.uploadSegment(segment);
 
