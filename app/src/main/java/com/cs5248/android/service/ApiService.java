@@ -11,15 +11,19 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.squareup.okhttp.OkHttpClient;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.client.OkClient;
+import retrofit.client.Response;
 import retrofit.converter.JacksonConverter;
 import retrofit.mime.TypedFile;
 import rx.Observable;
+import timber.log.Timber;
 
 /**
  * This classes encapsulate the core API, and may provide other features such as adaptation between
@@ -117,5 +121,21 @@ public class ApiService {
         return getApi().signalVideoEnd(videoId, lastSegmentId);
     }
 
+    /**
+     *  Read the MPD for the video. If lastSegmentId is not null, the MPD only includes
+     *  the segments after the lastSegmentId (exclusive).
+     */
+    public InputStream streamMPD(Long videoId, Long lastSegmentId) throws IOException {
+        Response response = getApi().streamMPD(videoId, lastSegmentId);
+        return response.getBody().in();
+    }
+
+    /**
+     * Stream a file from the server as an InputStream.
+     */
+    public InputStream streamFile(String path) throws IOException {
+        Response response = getApi().streamFile(path);
+        return response.getBody().in();
+    }
 }
 

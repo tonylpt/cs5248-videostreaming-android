@@ -5,6 +5,7 @@ import com.cs5248.android.model.VideoSegment;
 
 import java.util.List;
 
+import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.Field;
 import retrofit.http.FormUrlEncoded;
@@ -13,6 +14,8 @@ import retrofit.http.Multipart;
 import retrofit.http.POST;
 import retrofit.http.Part;
 import retrofit.http.Path;
+import retrofit.http.Query;
+import retrofit.http.Streaming;
 import retrofit.mime.TypedFile;
 import rx.Observable;
 
@@ -47,5 +50,14 @@ public interface Api {
     @POST("/video_end/{video_id}")
     Video signalVideoEnd(@Path("video_id") Long videoId,
                          @Field("last_segment_id") Long lastSegmentId);
+
+    @GET("/live_mpd/{video_id}")
+    @Streaming
+    Response streamMPD(@Path("video_id") Long videoId,
+                       @Query("last_segment_id") Long lastSegmentId);
+
+    @GET("/video_files/{path}")
+    @Streaming
+    Response streamFile(@Path("path") String path);
 
 }
