@@ -12,9 +12,9 @@ import timber.log.Timber;
  *
  * @author lpthanh
  */
-abstract class AppJob extends Job {
+abstract class JobBase extends Job {
 
-    protected AppJob(Params params) {
+    protected JobBase(Params params) {
         super(params);
     }
 

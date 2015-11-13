@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.path.android.jobqueue.Job;
 import com.path.android.jobqueue.JobManager;
+import com.path.android.jobqueue.TagConstraint;
 import com.path.android.jobqueue.config.Configuration;
 import com.path.android.jobqueue.log.CustomLogger;
 
@@ -60,6 +61,11 @@ public class JobService {
      */
     public void submitJob(Job job) {
         lowPriorityJobManager.addJob(job);
+    }
+
+    public void removeJobByTag(String tag) {
+        lowPriorityJobManager.cancelJobs(TagConstraint.ANY, tag);
+        urgentJobManager.cancelJobs(TagConstraint.ANY, tag);
     }
 
     /**

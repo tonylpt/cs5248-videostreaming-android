@@ -53,7 +53,11 @@ abstract class StreamingActivity extends BaseActivity {
             return;
         }
 
-        session.startStreaming();
+        if (session.isProgressing()) {
+            session.endStreaming();
+        } else {
+            session.startStreaming();
+        }
     }
 
 }

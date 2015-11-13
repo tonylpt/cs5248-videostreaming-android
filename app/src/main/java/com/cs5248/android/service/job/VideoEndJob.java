@@ -10,6 +10,9 @@ import java.util.Objects;
 import timber.log.Timber;
 
 /**
+ * Marks the end of a recording session, so that the server can start finalizing the upload
+ * process.
+ *
  * @author lpthanh
  */
 public class VideoEndJob extends UpdateJob {
@@ -20,7 +23,10 @@ public class VideoEndJob extends UpdateJob {
 
     public VideoEndJob(Long videoId, Long lastSegmentId) {
         // use the same group ID since this needs to come after any upload jobs
-        super(JobPriority.MID, 0, SegmentUploadJob.UPLOAD_JOB_GROUP_ID);
+        super(JobPriority.MID,
+                0,
+                SegmentUploadJob.UPLOAD_JOB_GROUP_ID,
+                SegmentUploadJob.RECORDING_JOB_TAG);
 
         // validate
         Objects.requireNonNull(videoId);

@@ -5,18 +5,19 @@ import com.path.android.jobqueue.Params;
 import timber.log.Timber;
 
 /**
- * The base for all jobs.
+ * The base for all updating jobs (persisted on disk so it can be retried if app crashes).
  *
  * @author lpthanh
  */
-abstract class UpdateJob extends AppJob {
+abstract class UpdateJob extends JobBase {
 
-    public UpdateJob(int priority, int delayMillis, String groupId) {
+    public UpdateJob(int priority, int delayMillis, String groupId, String... tags) {
         super(new Params(priority)
                         .requireNetwork()
                         .persist()
                         .delayInMs(delayMillis)
                         .groupBy(groupId)
+                        .addTags(tags)
         );
     }
 

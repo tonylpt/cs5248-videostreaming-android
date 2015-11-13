@@ -1,6 +1,7 @@
 package com.cs5248.android.service;
 
 import android.content.Context;
+import android.util.Pair;
 
 import com.cs5248.android.Config;
 import com.cs5248.android.model.Video;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
+import retrofit.client.Header;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
 import retrofit.converter.JacksonConverter;
@@ -129,17 +131,35 @@ public class ApiService {
     /**
      * Read the MPD for the video. If lastSegmentId is not null, the MPD only includes
      * the segments after the lastSegmentId (exclusive).
+     *
+     * @return a tuple of InputStream and the new last segment index (of the returned MPD).
      */
-    public InputStream streamMPD(Long videoId, Long lastSegmentId) throws IOException {
-        Response response = getApi().streamMPD(videoId, lastSegmentId);
-        return response.getBody().in();
+    public Pair<InputStream, Long> streamMPD(Long videoId, Long lastSegmentId) {
+        try {
+            Response response = getApi().streamMPD(videoId, lastSegmentId);
+            InputStream stream = response.getBody().in();
+            Long newLastSegmentId = null;
+            for (Header header : response.getHeaders()) {
+                if (header.getName().equals("lastSegmentId")) {
+                    try {
+                        newLastSegmentId = Long.parseLong(header.getValue());
+                    } catch (Exception e) {
+                        Timber.e(e, "Error parsing the lastSegmentId header from server.");
+                    }
+                }
+            }
+            return new Pair<>(stream, newLastSegmentId);
+        } catch (Exception e) {
+            Timber.e(e, "Error streaming MPD from server.");
+            return null;
+        }
     }
 
     /**
      * Stream a file from the server as an InputStream.
      */
     public InputStream streamFile(String path) throws IOException {
-        Response response = getApi().streamFile(path);
+        Response response = getApi().streamVideo(path);
         return response.getBody().in();
     }
 }

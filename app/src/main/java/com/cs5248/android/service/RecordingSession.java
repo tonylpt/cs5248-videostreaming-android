@@ -10,7 +10,8 @@ import android.os.SystemClock;
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoSegment;
 import com.cs5248.android.ui.CameraPreviewer;
-import com.google.common.io.ByteStreams;
+
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -255,7 +256,7 @@ public abstract class RecordingSession {
                          FileOutputStream out = new FileOutputStream(outputFile)) {
 
                         // copy the file from assets directory to a new file on external storage
-                        ByteStreams.copy(in, out);
+                        IOUtils.copy(in, out);
                     }
 
                 } catch (Exception e) {

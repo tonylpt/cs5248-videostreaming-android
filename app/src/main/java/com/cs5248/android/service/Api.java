@@ -1,5 +1,6 @@
 package com.cs5248.android.service;
 
+import com.cs5248.android.Config;
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoSegment;
 
@@ -56,8 +57,8 @@ public interface Api {
     Response streamMPD(@Path("video_id") Long videoId,
                        @Query("last_segment_id") Long lastSegmentId);
 
-    @GET("/video_files/{path}")
+    @GET(Config.VIDEO_FILES_PREFIX + "{path}")
     @Streaming
-    Response streamFile(@Path("path") String path);
+    Response streamVideo(@Path(value = "path", encode = false) String path);
 
 }

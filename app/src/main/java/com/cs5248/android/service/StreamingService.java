@@ -1,13 +1,17 @@
 package com.cs5248.android.service;
 
 import android.content.Context;
-import android.net.Uri;
+import android.os.Environment;
+import android.os.SystemClock;
+import android.util.Pair;
 
 import com.cs5248.android.model.Video;
-import com.cs5248.android.model.VideoSegment;
+import com.cs5248.android.service.job.StoragePrepareJob;
 import com.google.android.exoplayer.dash.mpd.MediaPresentationDescription;
 import com.google.android.exoplayer.dash.mpd.MediaPresentationDescriptionParser;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 
 import timber.log.Timber;
@@ -23,12 +27,10 @@ public class StreamingService {
 
     private final JobService jobService;
 
-    private final MediaPresentationDescriptionParser mpdParser =
-            new MediaPresentationDescriptionParser();
+    private final MediaPresentationDescriptionParser mpdParser;
 
-    private Video currentVideo;
+    private File downloadDir;
 
-    private VideoSegment currentSegment;
 
     public StreamingService(Context context,
                             ApiService apiService,
@@ -37,59 +39,94 @@ public class StreamingService {
         this.context = context;
         this.apiService = apiService;
         this.jobService = jobService;
+        this.mpdParser = new MediaPresentationDescriptionParser();
+
+        this.downloadDir = prepareDownloadDir();
     }
 
-    public void setCurrent(Video currentVideo, VideoSegment currentSegment) {
-        if (currentSegment != null && currentVideo != null &&
-                (currentSegment.getVideoId() == null ||
-                        !currentSegment.getVideoId().equals(currentVideo.getVideoId()))) {
-
-            throw new IllegalArgumentException(String.format("Segment (%s) does not belong to video (%s).",
-                    currentVideo, currentSegment));
+    private File prepareDownloadDir() {
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            return null;
         }
 
-        this.currentVideo = currentVideo;
-        this.currentSegment = currentSegment;
-    }
-
-    public boolean isBeingStreamed(long videoId) {
-        if (currentVideo == null) {
-            return false;
+        File extDir = new File(Environment.getExternalStorageDirectory(), "cs5248-android");
+        File downloadDir = new File(extDir, "downloaded");
+        if (downloadDir.exists()) {
+            // clean up
+            this.cleanUpLeftOverAsync(downloadDir);
+        } else {
+            if (!downloadDir.mkdirs() || !downloadDir.isDirectory()) {
+                return null;
+            }
         }
 
-        return currentVideo.getVideoId() == videoId;
+        return downloadDir;
     }
 
     /**
-     * @return null if the recording of video ID is not ongoing.
+     * Obtain an empty directory for storing temporary files used for streaming the video.
      */
-    public Long getCurrentOngoingSegmentId(long videoId) {
-        if (!isBeingStreamed(videoId)) {
-            return null;
+    private File getDownloadDirForVideo(Video video) {
+        if (downloadDir == null) {
+            // try again
+            downloadDir = prepareDownloadDir();
+
+            // the dir is really just not available
+            if (downloadDir == null) {
+                throw new StreamingException("The download directory '" +
+                        downloadDir.getAbsolutePath() + "' is not available",
+                        video.getVideoId());
+            }
         }
 
-        if (currentSegment == null) {
-            return null;
+        File dirForVideo;
+        do {
+            // find one directory that is not yet existing
+            dirForVideo = new File(downloadDir,
+                    "video-" + SystemClock.elapsedRealtime() + "-" + video.getVideoId());
+        } while (dirForVideo.exists() && dirForVideo.isDirectory());
+
+        if (!dirForVideo.mkdirs() || !dirForVideo.isDirectory()) {
+            throw new RuntimeException("Could not create directory: " + dirForVideo);
         }
 
-        return currentSegment.getSegmentId();
+        return dirForVideo;
     }
 
-    public MediaPresentationDescription getMPD(Video video, Long lastSegmentId) {
-        try {
-//            Uri mpdUri = video.buildMPDUri();
-//            if (mpdUri == null) {
-//                Timber.w("MPD Uri is not available for video [%d]", video.getVideoId());
-//                return null;
-//            }
 
-            InputStream mpdStream = apiService.streamMPD(video.getVideoId(), lastSegmentId);
+    /**
+     * Delete the files left behind by the previous streaming session, asynchronously
+     */
+    private void cleanUpLeftOverAsync(File storageDir) {
+        jobService.submitJob(new StoragePrepareJob(storageDir));
+    }
+
+    /**
+     * @return the tuple containing the parsed MPD and the lastSegmentId returned by server.
+     */
+    public Pair<MediaPresentationDescription, Long> getMpd(Video video, Long lastSegmentId) {
+
+        Pair<InputStream, Long> response = apiService.streamMPD(video.getVideoId(), lastSegmentId);
+        if (response == null) {
+            return null;
+        }
+
+        try (InputStream mpdStream = response.first) {
+            if (mpdStream == null) {
+                return null;
+            }
+
             MediaPresentationDescription mpd = mpdParser.parse(video.getBaseUrl(), mpdStream);
-            return mpd;
+            return new Pair<>(mpd, response.second);
+
         } catch (Exception e) {
             Timber.e(e, "Error reading MPD stream");
             return null;
         }
+    }
+
+    public InputStream streamSegment(String path) throws IOException {
+        return apiService.streamFile(path);
     }
 
     public StreamingSession openSession(Video video) {
@@ -99,28 +136,11 @@ public class StreamingService {
     private class StreamingSessionImpl extends StreamingSession {
 
         public StreamingSessionImpl(Video video) {
-            super(context, StreamingService.this, video);
-        }
-
-        @Override
-        protected void onStreamingStarted(Video video) {
-            setCurrent(video, null);
-            MediaPresentationDescription mpd = getMPD(video, null);
-        }
-
-        @Override
-        protected void onStreamingEnded(Video video) {
-            setCurrent(null, null);
-        }
-
-        @Override
-        protected void onSegmentDownloaded(Video video, VideoSegment segment) {
-
-        }
-
-        @Override
-        protected void onSegmentPlayed(Video video, VideoSegment segment) {
-
+            super(context,
+                    StreamingService.this,
+                    StreamingService.this.jobService,
+                    video,
+                    getDownloadDirForVideo(video));
         }
     }
 

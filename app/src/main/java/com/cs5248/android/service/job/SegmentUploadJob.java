@@ -23,6 +23,8 @@ abstract class SegmentUploadJob extends UpdateJob {
 
     static final String UPLOAD_JOB_GROUP_ID = "job.segments";
 
+    static final String RECORDING_JOB_TAG = "RECORDING";
+
     private VideoSegment segment;
 
     private int segmentDuration;
@@ -33,7 +35,7 @@ abstract class SegmentUploadJob extends UpdateJob {
                             int delayMillis,
                             String groupId) {
 
-        super(priority, delayMillis, groupId);
+        super(priority, delayMillis, groupId, RECORDING_JOB_TAG);
         this.segment = segment;
         this.segmentDuration = segmentDuration;
     }

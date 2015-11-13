@@ -14,4 +14,6 @@ public class Config {
 
     public static final String SERVER_BASE_URL = BASE_URL_CUBIE;
 
+    public static final String VIDEO_FILES_PREFIX = "/video_files/";
+
 }
