@@ -1,12 +1,15 @@
 package com.cs5248.android.adapter;
 
 import android.content.Context;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.cs5248.android.model.Video;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,6 +95,14 @@ public abstract class VideoAdapter<VH extends VideoAdapter.VideoViewHolder>
             }
 
             onItemClick(getAdapterPosition());
+        }
+
+        protected final void loadImage(ImageView imageView, Uri uri) {
+            if (uri != null) {
+                Picasso.with(getContext()).load(uri).into(imageView);
+            } else {
+                imageView.setImageDrawable(null);
+            }
         }
     }
 }

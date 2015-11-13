@@ -67,7 +67,7 @@ public class CameraPreviewer extends SurfaceView {
 //        }
 //    }
 //
-//    public void startRecording() {
+//    public void startStreaming() {
 //        mCamera.startPreview();
 //    }
 //

@@ -9,6 +9,7 @@ import com.cs5248.android.dagger.DaggerApplicationComponent;
 import com.cs5248.android.service.ApiService;
 import com.cs5248.android.service.JobService;
 import com.cs5248.android.service.RecordingService;
+import com.cs5248.android.service.StreamingService;
 
 import javax.inject.Inject;
 
@@ -29,6 +30,9 @@ public class StreamingApplication extends Application {
 
     @Inject
     RecordingService recordingService;
+
+    @Inject
+    StreamingService streamingService;
 
 
     @Override
@@ -62,6 +66,10 @@ public class StreamingApplication extends Application {
 
     public RecordingService recordingService() {
         return recordingService;
+    }
+
+    public StreamingService streamingService() {
+        return streamingService;
     }
 
 }

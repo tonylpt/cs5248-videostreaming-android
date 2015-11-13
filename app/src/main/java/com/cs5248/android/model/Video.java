@@ -1,8 +1,12 @@
 package com.cs5248.android.model;
 
+import android.net.Uri;
+
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
+import com.cs5248.android.Config;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.parceler.Parcel;
@@ -151,4 +155,46 @@ public class Video extends Model {
     @JsonProperty("uri_thumbnail")
     private String uriThumbnail;
 
+
+    @JsonIgnore
+    public Uri buildThumbnailUri() {
+        String videoBaseUrl = getBaseUrl();
+        if (videoBaseUrl == null) {
+            return null;
+        }
+
+        String thumbnailUri = getUriThumbnail();
+        if (thumbnailUri == null) {
+            return null;
+        }
+
+        Uri uri = Uri.parse(Config.SERVER_BASE_URL)
+                .buildUpon()
+                .path(videoBaseUrl)
+                .appendPath(thumbnailUri)
+                .build();
+
+        return uri;
+    }
+
+    @JsonIgnore
+    public Uri buildMPDUri() {
+        String videoBaseUrl = getBaseUrl();
+        if (videoBaseUrl == null) {
+            return null;
+        }
+
+        String mpdUri = getUriMpd();
+        if (mpdUri == null) {
+            return null;
+        }
+
+        Uri uri = Uri.parse(Config.SERVER_BASE_URL)
+                .buildUpon()
+                .path(videoBaseUrl)
+                .appendPath(mpdUri)
+                .build();
+
+        return uri;
+    }
 }

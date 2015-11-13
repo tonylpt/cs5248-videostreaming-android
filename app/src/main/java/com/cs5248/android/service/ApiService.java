@@ -42,6 +42,9 @@ public class ApiService {
     public ApiService(Context context) {
         this.context = context;
 
+        String serverBaseUrl = Config.SERVER_BASE_URL;
+        long timeout = TIME_OUT;
+
         RequestInterceptor requestInterceptor = request -> {
             request.addHeader("Cache-control", "public,max-age=0");
             request.addHeader("Accept", "application/json");
@@ -52,11 +55,11 @@ public class ApiService {
         mapper.setAnnotationIntrospector(new IgnoreAAModelIntrospector());
 
         final OkHttpClient okHttpClient = new OkHttpClient();
-        okHttpClient.setReadTimeout(TIME_OUT, TimeUnit.MILLISECONDS);
-        okHttpClient.setConnectTimeout(TIME_OUT, TimeUnit.MILLISECONDS);
+        okHttpClient.setReadTimeout(timeout, TimeUnit.MILLISECONDS);
+        okHttpClient.setConnectTimeout(timeout, TimeUnit.MILLISECONDS);
 
         RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(Config.SERVER_BASE_URL)
+                .setEndpoint(serverBaseUrl)
                 .setClient(new OkClient(okHttpClient))
                 .setConverter(new JacksonConverter(mapper))
                 .setRequestInterceptor(requestInterceptor)
@@ -64,6 +67,8 @@ public class ApiService {
                 .build();
 
         api = restAdapter.create(Api.class);
+
+        Timber.d("Retrofit was setup to connect to %s, with timeout=%dms", serverBaseUrl, timeout);
     }
 
     public Api getApi() {
@@ -122,8 +127,8 @@ public class ApiService {
     }
 
     /**
-     *  Read the MPD for the video. If lastSegmentId is not null, the MPD only includes
-     *  the segments after the lastSegmentId (exclusive).
+     * Read the MPD for the video. If lastSegmentId is not null, the MPD only includes
+     * the segments after the lastSegmentId (exclusive).
      */
     public InputStream streamMPD(Long videoId, Long lastSegmentId) throws IOException {
         Response response = getApi().streamMPD(videoId, lastSegmentId);

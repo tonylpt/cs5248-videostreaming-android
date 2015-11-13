@@ -7,6 +7,7 @@ import com.cs5248.android.service.ApiService;
 import com.cs5248.android.service.CameraService;
 import com.cs5248.android.service.JobService;
 import com.cs5248.android.service.RecordingService;
+import com.cs5248.android.service.StreamingService;
 
 import javax.inject.Singleton;
 
@@ -45,7 +46,7 @@ public class ApplicationModule {
 
     @Provides
     @Singleton
-    public JobService provideUrgentJobManager(Context context) {
+    public JobService provideJobService(Context context) {
         return new JobService(context);
     }
 
@@ -56,6 +57,15 @@ public class ApplicationModule {
                                                     JobService jobService) {
 
         return new RecordingService(context, service, jobService);
+    }
+
+    @Provides
+    @Singleton
+    public StreamingService provideStreamingService(Context context,
+                                                    ApiService service,
+                                                    JobService jobService) {
+
+        return new StreamingService(context, service, jobService);
     }
 
 }

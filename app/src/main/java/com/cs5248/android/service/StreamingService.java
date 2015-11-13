@@ -1,30 +1,30 @@
 package com.cs5248.android.service;
 
 import android.content.Context;
+import android.net.Uri;
 
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoSegment;
-import com.cs5248.android.model.VideoStatus;
-import com.cs5248.android.model.VideoType;
-import com.cs5248.android.service.job.SegmentLiveUploadJob;
-import com.cs5248.android.service.job.VideoEndJob;
+import com.google.android.exoplayer.dash.mpd.MediaPresentationDescription;
+import com.google.android.exoplayer.dash.mpd.MediaPresentationDescriptionParser;
 
-import java.util.Date;
+import java.io.InputStream;
 
-import rx.Observable;
+import timber.log.Timber;
 
 /**
  * @author lpthanh
  */
 public class StreamingService {
 
-    private static final int SEGMENT_DURATION = 3000;
-
     private final Context context;
 
     private final ApiService apiService;
 
     private final JobService jobService;
+
+    private final MediaPresentationDescriptionParser mpdParser =
+            new MediaPresentationDescriptionParser();
 
     private Video currentVideo;
 
@@ -52,7 +52,7 @@ public class StreamingService {
         this.currentSegment = currentSegment;
     }
 
-    public boolean isBeingRecorded(long videoId) {
+    public boolean isBeingStreamed(long videoId) {
         if (currentVideo == null) {
             return false;
         }
@@ -64,7 +64,7 @@ public class StreamingService {
      * @return null if the recording of video ID is not ongoing.
      */
     public Long getCurrentOngoingSegmentId(long videoId) {
-        if (!isBeingRecorded(videoId)) {
+        if (!isBeingStreamed(videoId)) {
             return null;
         }
 
@@ -75,8 +75,25 @@ public class StreamingService {
         return currentSegment.getSegmentId();
     }
 
-    public int getSegmentDuration() {
-        return SEGMENT_DURATION;
+    public MediaPresentationDescription getMPD(Video video, Long lastSegmentId) {
+        try {
+            Uri mpdUri = video.buildMPDUri();
+            if (mpdUri == null) {
+                Timber.w("MPD Uri is not available for video [%d]", video.getVideoId());
+                return null;
+            }
+
+            InputStream mpdStream = apiService.streamMPD(video.getVideoId(), lastSegmentId);
+            MediaPresentationDescription mpd = mpdParser.parse(mpdUri.toString(), mpdStream);
+            return mpd;
+        } catch (Exception e) {
+            Timber.e(e, "Error reading MPD stream");
+            return null;
+        }
+    }
+
+    public StreamingSession openSession(Video video) {
+        return new StreamingSessionImpl(video);
     }
 
     private class StreamingSessionImpl extends StreamingSession {
@@ -86,26 +103,23 @@ public class StreamingService {
         }
 
         @Override
-        protected void onRecordingStarted(Video video) {
+        protected void onStreamingStarted(Video video) {
             setCurrent(video, null);
-            jobService.setUrgentMode(true);
         }
 
         @Override
-        protected void onRecordingEnded(Video video, VideoSegment lastSegment) {
+        protected void onStreamingEnded(Video video) {
             setCurrent(null, null);
-
-            // mark video ends
-            jobService.submitJob(new VideoEndJob(video.getVideoId(), lastSegment.getSegmentId()));
-            jobService.setUrgentMode(false);
         }
 
         @Override
-        protected void onSegmentRecorded(Video video, VideoSegment segment) {
-            setCurrent(video, segment);
+        protected void onSegmentDownloaded(Video video, VideoSegment segment) {
 
-            // upload the segment
-            jobService.submitUrgentJob(new SegmentLiveUploadJob(segment, getSegmentDuration()));
+        }
+
+        @Override
+        protected void onSegmentPlayed(Video video, VideoSegment segment) {
+
         }
     }
 

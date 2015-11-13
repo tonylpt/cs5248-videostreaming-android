@@ -71,11 +71,11 @@ public class CameraService {
     }
 
     public void startRecording() {
-//        cameraPreview.startRecording();
+//        cameraPreview.startStreaming();
     }
 
     public void stopRecording() {
-//        cameraPreview.startRecording();
+//        cameraPreview.startStreaming();
     }
 
     public List<Byte> getLatestSegmentData() {
