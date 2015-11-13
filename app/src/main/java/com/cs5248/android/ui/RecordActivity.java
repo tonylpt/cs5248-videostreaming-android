@@ -6,7 +6,7 @@ import android.support.v7.app.ActionBar;
 import com.ToxicBakery.viewpager.transforms.RotateUpTransformer;
 import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
-import com.cs5248.android.service.Recording;
+import com.cs5248.android.service.RecordingSession;
 import com.cs5248.android.service.ApiService;
 import com.cs5248.android.util.BaseActivity;
 import com.cs5248.android.util.WizardView;
@@ -21,7 +21,7 @@ public class RecordActivity extends BaseActivity {
     ApiService apiService;
 
     @Bind(R.id.wizard_view)
-    WizardView<Recording> wizardView;
+    WizardView<RecordingSession> wizardView;
 
     private RecordStep1 step1 = new RecordStep1();
 
@@ -40,7 +40,7 @@ public class RecordActivity extends BaseActivity {
         wizardView.setTransitionDuration(1000);
     }
 
-    private void onFinish(Recording recording) {
+    private void onFinish(RecordingSession recordingSession) {
         setResult(RESULT_OK);
         finish();
     }

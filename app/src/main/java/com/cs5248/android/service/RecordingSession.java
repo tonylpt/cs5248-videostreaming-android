@@ -30,7 +30,7 @@ import static com.cs5248.android.service.RecordingState.PROGRESSING;
 /**
  * @author lpthanh
  */
-public abstract class Recording {
+public abstract class RecordingSession {
 
     private final AtomicLong nextSegmentId = new AtomicLong();
 
@@ -53,7 +53,7 @@ public abstract class Recording {
     @Setter
     private StateChangeListener stateChangeListener;
 
-    protected Recording(Context context, RecordingService service, Video video) {
+    protected RecordingSession(Context context, RecordingService service, Video video) {
         // validate
         Objects.requireNonNull(video);
         Objects.requireNonNull(video.getVideoId());
@@ -196,7 +196,7 @@ public abstract class Recording {
      */
     private static class SimulationThread extends Thread {
 
-        private final Recording recording;
+        private final RecordingSession recordingSession;
 
         private final AssetManager assets;
 
@@ -206,12 +206,12 @@ public abstract class Recording {
 
         private int producedSegment;
 
-        public SimulationThread(Context context, Recording recording, int totalSegment, long interval) {
+        public SimulationThread(Context context, RecordingSession recordingSession, int totalSegment, long interval) {
             if (totalSegment <= 0) {
                 throw new IllegalArgumentException();
             }
 
-            this.recording = recording;
+            this.recordingSession = recordingSession;
             this.assets = context.getAssets();
             this.totalSegment = totalSegment;
             this.producedSegment = 0;
@@ -238,12 +238,12 @@ public abstract class Recording {
                 }
 
                 // produce the video file
-                VideoSegment segment = recording.createNextSegment();
+                VideoSegment segment = recordingSession.createNextSegment();
 
                 ++producedSegment;
 
                 String fileName = segment.getSegmentId() + "." + segment.getOriginalExtension();
-                File outputFile = new File(recording.recordDir, fileName);
+                File outputFile = new File(recordingSession.recordDir, fileName);
                 segment.setOriginalPath(outputFile.getAbsolutePath());
 
                 try {
@@ -259,14 +259,14 @@ public abstract class Recording {
                     }
 
                 } catch (Exception e) {
-                    recording.recordingEndedWithError(e);
+                    recordingSession.recordingEndedWithError(e);
                     return;
                 }
 
-                recording.segmentRecorded(segment);
+                recordingSession.segmentRecorded(segment);
             }
 
-            recording.recordingEnded();
+            recordingSession.recordingEnded();
         }
 
         public void stopSimulating() {

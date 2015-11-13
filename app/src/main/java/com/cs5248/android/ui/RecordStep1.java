@@ -6,7 +6,7 @@ import android.widget.EditText;
 
 import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
-import com.cs5248.android.service.Recording;
+import com.cs5248.android.service.RecordingSession;
 import com.cs5248.android.service.RecordingService;
 import com.cs5248.android.util.Util;
 import com.cs5248.android.util.WizardStep;
@@ -27,7 +27,7 @@ import timber.log.Timber;
 /**
  * @author lpthanh
  */
-public class RecordStep1 extends WizardStep<Recording> {
+public class RecordStep1 extends WizardStep<RecordingSession> {
 
     @Inject
     RecordingService recordingService;
@@ -76,14 +76,14 @@ public class RecordStep1 extends WizardStep<Recording> {
                 .subscribe(this::onCreateSuccess, this::onCreateFailure);
     }
 
-    private void onCreateSuccess(Recording recording) {
+    private void onCreateSuccess(RecordingSession recordingSession) {
         Timber.d("Successfully created video");
 
         setVideoCreated(true);
         createButton.setProgress(100);
 
         // show the success status for a while
-        Util.invokeLater(() -> finishStep(recording), 1000);
+        Util.invokeLater(() -> finishStep(recordingSession), 1000);
     }
 
     private void onCreateFailure(Throwable throwable) {
@@ -95,7 +95,7 @@ public class RecordStep1 extends WizardStep<Recording> {
     }
 
     @Override
-    protected void startStep(Recording lastResult) {
+    protected void startStep(RecordingSession lastResult) {
 
     }
 

@@ -16,7 +16,7 @@ import rx.Observable;
 /**
  * @author lpthanh
  */
-public class RecordingService {
+public class StreamingService {
 
     private static final int SEGMENT_DURATION = 3000;
 
@@ -30,7 +30,7 @@ public class RecordingService {
 
     private VideoSegment currentSegment;
 
-    public RecordingService(Context context,
+    public StreamingService(Context context,
                             ApiService apiService,
                             JobService jobService) {
 
@@ -79,22 +79,10 @@ public class RecordingService {
         return SEGMENT_DURATION;
     }
 
-    public Observable<RecordingSession> createNewRecording(String title) {
-        Video video = new Video();
-        video.setTitle(title);
-        video.setCreatedAt(new Date());
-        video.setStatus(VideoStatus.EMPTY);
-        video.setType(VideoType.LIVE);
+    private class StreamingSessionImpl extends StreamingSession {
 
-        return apiService
-                .createVideo(video)
-                .map(RecordingSessionImpl::new);
-    }
-
-    private class RecordingSessionImpl extends RecordingSession {
-
-        public RecordingSessionImpl(Video video) {
-            super(context, RecordingService.this, video);
+        public StreamingSessionImpl(Video video) {
+            super(context, StreamingService.this, video);
         }
 
         @Override
