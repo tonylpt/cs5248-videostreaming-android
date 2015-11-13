@@ -9,10 +9,6 @@ public class VodPlaybackActivity extends StreamingActivity {
 
     /* some other custom things for VOD streaming */
 
-    @OnClick(R.id.play_pause_button)
-    public void onPlayPauseClick() {
-
-    }
 
     @Override
     protected void injectActivity(ApplicationComponent component) {

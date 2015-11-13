@@ -19,7 +19,7 @@ import timber.log.Timber;
  *
  * @author lpthanh
  */
-abstract class SegmentUploadJob extends UsingNetworkJob {
+abstract class SegmentUploadJob extends UpdateJob {
 
     static final String UPLOAD_JOB_GROUP_ID = "job.segments";
 

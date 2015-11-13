@@ -2,7 +2,8 @@ package com.cs5248.android.service.job;
 
 import com.cs5248.android.StreamingApplication;
 import com.cs5248.android.model.Video;
-import com.cs5248.android.service.ApiService;
+import com.cs5248.android.service.StreamingService;
+import com.cs5248.android.service.StreamingSession;
 import com.path.android.jobqueue.RetryConstraint;
 
 import java.util.Objects;
@@ -12,35 +13,27 @@ import timber.log.Timber;
 /**
  * @author lpthanh
  */
-public class VideoEndJob extends UpdateJob {
+public class MpdDownloadJob extends QueryJob {
 
-    private long videoId;
+    static final String MPD_DOWNLOAD_JOB_GROUP_ID = "job.mpd";
 
-    private long lastSegmentId;
+    private final StreamingSession session;
 
-    public VideoEndJob(Long videoId, Long lastSegmentId) {
-        // use the same group ID since this needs to come after any upload jobs
-        super(JobPriority.MID, 0, SegmentUploadJob.UPLOAD_JOB_GROUP_ID);
+    public MpdDownloadJob(StreamingSession session) {
+        super(JobPriority.MID, 0, MPD_DOWNLOAD_JOB_GROUP_ID);
 
-        // validate
-        Objects.requireNonNull(videoId);
-        Objects.requireNonNull(lastSegmentId);
+        Objects.requireNonNull(session);
 
-        this.videoId = videoId;
-        this.lastSegmentId = lastSegmentId;
+        this.session = session;
     }
 
     @Override
     public void onRun() throws Throwable {
         StreamingApplication application = getApplication();
-        ApiService api = application.apiService();
-
-        Timber.d("Marking video ending: id=%d.", videoId);
+        StreamingService streamingService = application.streamingService();
 
         try {
-            Video result = api.markVideoUploadEnd(videoId, lastSegmentId);
-
-            Timber.i("Video (%d)has been marked ended.", result.getVideoId());
+            Video result =
 
         } catch (Exception e) {
             Timber.e(e, "Failed to mark the video end. ID=%d", videoId);

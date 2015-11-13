@@ -77,14 +77,14 @@ public class StreamingService {
 
     public MediaPresentationDescription getMPD(Video video, Long lastSegmentId) {
         try {
-            Uri mpdUri = video.buildMPDUri();
-            if (mpdUri == null) {
-                Timber.w("MPD Uri is not available for video [%d]", video.getVideoId());
-                return null;
-            }
+//            Uri mpdUri = video.buildMPDUri();
+//            if (mpdUri == null) {
+//                Timber.w("MPD Uri is not available for video [%d]", video.getVideoId());
+//                return null;
+//            }
 
             InputStream mpdStream = apiService.streamMPD(video.getVideoId(), lastSegmentId);
-            MediaPresentationDescription mpd = mpdParser.parse(mpdUri.toString(), mpdStream);
+            MediaPresentationDescription mpd = mpdParser.parse(video.getBaseUrl(), mpdStream);
             return mpd;
         } catch (Exception e) {
             Timber.e(e, "Error reading MPD stream");
@@ -105,6 +105,7 @@ public class StreamingService {
         @Override
         protected void onStreamingStarted(Video video) {
             setCurrent(video, null);
+            MediaPresentationDescription mpd = getMPD(video, null);
         }
 
         @Override

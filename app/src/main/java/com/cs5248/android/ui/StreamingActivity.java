@@ -2,7 +2,9 @@ package com.cs5248.android.ui;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
+import android.widget.Button;
 
+import com.cs5248.android.R;
 import com.cs5248.android.model.Video;
 import com.cs5248.android.service.StreamingService;
 import com.cs5248.android.service.StreamingSession;
@@ -11,12 +13,19 @@ import com.cs5248.android.util.Util;
 
 import javax.inject.Inject;
 
+import butterknife.Bind;
+import butterknife.OnClick;
 import timber.log.Timber;
 
 abstract class StreamingActivity extends BaseActivity {
 
     @Inject
     StreamingService streamingService;
+
+    @Bind(R.id.play_pause_button)
+    Button playPauseButton;
+
+    private StreamingSession session;
 
     @Override
     protected void initActivity(Bundle savedInstanceState) {
@@ -27,17 +36,24 @@ abstract class StreamingActivity extends BaseActivity {
 
         Video video = Util.getParcelable(this, "video", Video.class);
         if (video != null) {
-            StreamingSession session = streamingService.openSession(video);
-            if (session != null) {
-                startStreaming();
-            }
+            this.session = streamingService.openSession(video);
         } else {
             Timber.e("Could not find a video parcelable for this activity");
         }
+
+        if (session == null) {
+            playPauseButton.setEnabled(false);
+        }
     }
 
-    private void startStreaming() {
 
+    @OnClick(R.id.play_pause_button)
+    public void onPlayPauseClick() {
+        if (session == null) {
+            return;
+        }
+
+        session.startStreaming();
     }
 
 }

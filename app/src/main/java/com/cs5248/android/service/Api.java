@@ -51,7 +51,7 @@ public interface Api {
     Video signalVideoEnd(@Path("video_id") Long videoId,
                          @Field("last_segment_id") Long lastSegmentId);
 
-    @GET("/live_mpd/{video_id}")
+    @GET("/live_mpd/{video_id}.mpd")
     @Streaming
     Response streamMPD(@Path("video_id") Long videoId,
                        @Query("last_segment_id") Long lastSegmentId);
