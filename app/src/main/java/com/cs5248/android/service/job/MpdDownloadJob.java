@@ -10,6 +10,10 @@ import com.cs5248.android.service.StreamingSession;
  */
 public class MpdDownloadJob extends DownloadJob {
 
+    public MpdDownloadJob(StreamingSession session, int delay) {
+        super(session, delay);
+    }
+
     public MpdDownloadJob(StreamingSession session) {
         super(session);
     }

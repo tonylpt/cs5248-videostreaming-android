@@ -21,12 +21,16 @@ public abstract class DownloadJob extends QueryJob {
 
     private final StreamingSession session;
 
-    public DownloadJob(StreamingSession session) {
-        super(JobPriority.MID, 0, DOWNLOAD_JOB_GROUP_ID, STREAMING_JOB_TAG);
+    public DownloadJob(StreamingSession session, int delay) {
+        super(JobPriority.MID, delay, DOWNLOAD_JOB_GROUP_ID, STREAMING_JOB_TAG);
 
         Objects.requireNonNull(session);
 
         this.session = session;
+    }
+
+    public DownloadJob(StreamingSession session) {
+        this(session, 0);
     }
 
     protected abstract void performJob(StreamingSession session);

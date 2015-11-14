@@ -57,6 +57,9 @@ public abstract class StreamingSession {
     private final File storageDir;
 
     @Getter
+    private final boolean liveStreaming;
+
+    @Getter
     private VideoSegment currentSegment;
 
     @Getter
@@ -80,7 +83,8 @@ public abstract class StreamingSession {
                                StreamingService streamingService,
                                JobService jobService,
                                Video video,
-                               File storageDir) {
+                               File storageDir,
+                               boolean liveStreaming) {
         // validate
         Objects.requireNonNull(video);
         Objects.requireNonNull(video.getVideoId());
@@ -90,6 +94,7 @@ public abstract class StreamingSession {
         this.jobService = jobService;
         this.video = video;
         this.storageDir = storageDir;
+        this.liveStreaming = liveStreaming;
 
         this.streamingState = NOT_STARTED;
     }
@@ -136,11 +141,6 @@ public abstract class StreamingSession {
         jobService.submitJob(new FileRemoveJob(storageDir, true));
     }
 
-    private void segmentDownloaded(VideoSegment segment) {
-        currentSegment = segment;
-    }
-
-
     private void setStreamingState(StreamingState newState) {
         StreamingState lastState = this.streamingState;
         this.streamingState = newState;
@@ -157,6 +157,22 @@ public abstract class StreamingSession {
 
     public boolean isProgressing() {
         return getStreamingState() == PROGRESSING;
+    }
+
+    private void streamletDownloaded(Streamlet streamlet) {
+        // todo push into queue
+
+        if (stateChangeListener != null) {
+            stateChangeListener.streamletDownloaded(streamlet);
+        }
+    }
+
+    /**
+     * Called by the client once it's done with the streamlet so we can delete
+     * the streamlet's file.
+     */
+    public void clearStreamlet(Streamlet streamlet) {
+        jobService.submitJob(new FileRemoveJob(streamlet.getTargetFile(), false));
     }
 
     /**
@@ -217,6 +233,13 @@ public abstract class StreamingSession {
             Timber.e(e, "Error processing MPD");
             throw new StreamingException("Error processing MPD", e, getVideo().getVideoId());
         }
+
+        // if this is live streaming, schedule the next MPD update
+        if (liveStreaming) {
+            jobService.submitJob(new MpdDownloadJob(this,
+                    // delay for half the duration of the segment
+                    (int) (getVideo().getSegmentDuration() * .5f)));
+        }
     }
 
     /**
@@ -231,11 +254,11 @@ public abstract class StreamingSession {
             return;
         }
 
-        // todo select quality based on last speed
+        // todo select quality based on last speed, this is just a mock
+        streamlet.setSelectedQualityt(streamlet.getQualities().get(0));
 
-
-        Pair<Format, Uri> resolution = streamlet.getQualities().get(0);
-        String path = resolution.second.toString();
+        Pair<Format, Uri> quality = streamlet.getSelectedQualityt();
+        String path = quality.second.toString();
         // just take the part of the path after the prefix
         if (path.startsWith(Config.VIDEO_FILES_PREFIX)) {
             path = path.substring(Config.VIDEO_FILES_PREFIX.length() + 1);
@@ -259,7 +282,7 @@ public abstract class StreamingSession {
                 IOUtils.copy(in, out);
             }
 
-            // todo push the streamlet into a queue
+            streamletDownloaded(streamlet);
 
             long endTime = SystemClock.elapsedRealtime();
             long duration = endTime - startTime;
@@ -268,6 +291,9 @@ public abstract class StreamingSession {
             long contentLength = downloading.second;
 
             float speed = (float) contentLength / duration;
+
+            // this last speed will be used to select the best quality
+            // the next time this method is called
             this.lastSpeed = speed;
 
             streamlet.setStatus(DOWNLOADED);
@@ -285,6 +311,9 @@ public abstract class StreamingSession {
     public interface StateChangeListener {
 
         void stateChanged(StreamingState newState);
+
+        void streamletDownloaded(Streamlet streamlet);
+
     }
 
 
@@ -301,7 +330,7 @@ public abstract class StreamingSession {
 
         @Getter
         @Setter
-        private Format selectedFormat;
+        private Pair<Format, Uri> selectedQualityt;
 
         @Getter
         @Setter
@@ -314,7 +343,7 @@ public abstract class StreamingSession {
             this.video = video;
             this.qualities = qualities;
             this.status = Status.PENDING;
-            this.selectedFormat = null;
+            this.selectedQualityt = null;
 
             // create a place holder file object (for this stream to be downloaded later)
             // file name matching the last part of the URI
