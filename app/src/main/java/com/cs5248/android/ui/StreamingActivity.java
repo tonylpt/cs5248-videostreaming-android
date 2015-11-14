@@ -43,8 +43,20 @@ abstract class StreamingActivity extends BaseActivity {
     List<StreamingSession.Streamlet> streamletsQueue = new ArrayList<>();
     int currentSegmentBeingPlayed = 0;
     boolean firstTime = true;
+    boolean streamEnded = false;
 
     private StreamingSession session;
+    private final StreamingSession.StreamingListener streamingListener = new StreamingSession.StreamingListener() {
+        @Override
+        public void streamletDownloaded(StreamingSession.Streamlet streamlet) {
+            runOnUiThread(() -> onStreamletDownloaded(streamlet));
+        }
+
+        @Override
+        public void noMoreStreamlet() {
+            runOnUiThread(() -> onStreamingEnded());
+        }
+    };
 
 
     @Override
@@ -57,7 +69,8 @@ abstract class StreamingActivity extends BaseActivity {
         Video video = Util.getParcelable(this, "video", Video.class);
         if (video != null) {
             this.session = streamingService.openSession(video, isLiveStreaming());
-            this.session.setStateChangeListener(new StreamingStateChangedListener());
+            this.session.setStreamingListener(streamingListener);
+
         } else {
             Timber.e("Could not find a video parcelable for this activity");
         }
@@ -69,6 +82,22 @@ abstract class StreamingActivity extends BaseActivity {
 
     protected abstract boolean isLiveStreaming();
 
+    private void onStreamletDownloaded(StreamingSession.Streamlet streamlet) {
+        // just to demonstrate that the UI can be safely updated from here
+        // this method may not actually be needed.
+
+        // we can just set up a polling loop when the streaming starts and
+        // poll the session by:  session.getNextStreamlet() when we need the next
+        // segment. Once we finish playing the segment, clean it up by:
+        // session.clearStreamlet(streamlet)
+
+        playPauseButton.setText("Downloaded: " + streamlet.getTargetFile().getName());
+    }
+
+    private void onStreamingEnded() {
+        playPauseButton.setText("No more segment");
+        streamEnded = true;
+    }
     abstract public RelativeLayout getPlayerContainer();
 
     @OnClick(R.id.play_pause_button)
@@ -92,7 +121,9 @@ abstract class StreamingActivity extends BaseActivity {
             //first time need to prepare video player first
             if(firstTime){
                 StreamingSession.Streamlet streamlet = getNextStreamlet();
-                playerService.prepareBufferedMediaPlayer(streamlet);
+                if(streamlet != null) {
+                    playerService.prepareBufferedMediaPlayer(streamlet);
+                }
                 firstTime = false;
             }
             //not the first time, we should already have the next segment downloaded and prepared in buffer
@@ -108,30 +139,21 @@ abstract class StreamingActivity extends BaseActivity {
     }
 
     public StreamingSession.Streamlet getNextStreamlet(){
-        while(streamletsQueue.size() < currentSegmentBeingPlayed){
+        StreamingSession.Streamlet streamlet = null;
+        while((streamlet = session.getNextStreamlet()) == null){
             try {
                 Thread.sleep(500);
+                if(streamEnded){
+                    return null;
+                }
             }
             catch(Exception e){
                 e.printStackTrace();
             }
         }
-        return streamletsQueue.get(currentSegmentBeingPlayed++);
+        return streamlet;
     }
 
-
-    public class StreamingStateChangedListener implements StreamingSession.StateChangeListener{
-        @Override
-        public void streamletDownloaded(StreamingSession.Streamlet streamlet) {
-            streamletsQueue.add(streamlet);
-
-        }
-
-        @Override
-        public void stateChanged(StreamingState newState) {
-
-        }
-    }
 
     public class MediaPlayerService{
 
@@ -145,7 +167,7 @@ abstract class StreamingActivity extends BaseActivity {
 
         private void prepareBufferedMediaPlayer(StreamingSession.Streamlet streamlet) {
 
-            this.bufferedSurface = new SurfaceView(getParent());
+            this.bufferedSurface = new SurfaceView(StreamingActivity.this);
             this.bufferedHolder = this.bufferedSurface.getHolder();
             getPlayerContainer().addView(bufferedSurface, 0);
             this.bufferedHolder.addCallback(new SurfaceHolder.Callback() {
@@ -200,6 +222,9 @@ abstract class StreamingActivity extends BaseActivity {
             while(bufferedMediaPlayer == null){
                 try {
                     Thread.sleep(100);
+                    if(streamEnded){
+                        return;
+                    }
                 }
                 catch(Exception e){
                     e.printStackTrace();
@@ -224,9 +249,11 @@ abstract class StreamingActivity extends BaseActivity {
             this.bufferedSurface = null;
 
             StreamingSession.Streamlet streamlet = getNextStreamlet();
-            prepareBufferedMediaPlayer(streamlet);
+            if(streamlet != null)
+                prepareBufferedMediaPlayer(streamlet);
         }
     };
 
 
 }
+
