@@ -7,7 +7,6 @@ import android.util.Pair;
 
 import com.cs5248.android.Config;
 import com.cs5248.android.model.Video;
-import com.cs5248.android.model.VideoSegment;
 import com.cs5248.android.service.job.DownloadJob;
 import com.cs5248.android.service.job.FileRemoveJob;
 import com.cs5248.android.service.job.MpdDownloadJob;
@@ -25,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -62,15 +62,12 @@ public abstract class StreamingSession {
     private final boolean liveStreaming;
 
     @Getter
-    private VideoSegment currentSegment;
-
-    @Getter
     private volatile StreamingState streamingState;
 
     /**
      * Use WeakReference to avoid memory leak by the background threads.
      */
-    private WeakReference<StateChangeListener> stateChangeListener;
+    private WeakReference<StreamingListener> streamingListener;
 
     /**
      * To store the downloaded streamlets
@@ -87,6 +84,13 @@ public abstract class StreamingSession {
      * The download speed of the last streamlet, in bytes per second.
      */
     private float lastSpeed;
+
+    /**
+     * To test whether a new streamlet is a new one, compare its name to the name of the last
+     * obtained streamlet.
+     */
+    private String lastStreamletName;
+
 
     protected StreamingSession(Context context,
                                StreamingService streamingService,
@@ -115,7 +119,7 @@ public abstract class StreamingSession {
             return;
         }
 
-        setStreamingState(PROGRESSING);
+        streamingState = PROGRESSING;
 
         // start the first MPD download
         jobService.submitJob(new MpdDownloadJob(this));
@@ -131,15 +135,7 @@ public abstract class StreamingSession {
         }
 
         cleanUp();
-        streamingEnded();
-    }
-
-    /**
-     * Mark the end of the streaming session, either by user or because the stream has ended.
-     */
-    private void streamingEnded() {
-        setStreamingState(ENDED);
-        currentSegment = null;
+        streamingState = ENDED;
     }
 
     /**
@@ -149,22 +145,6 @@ public abstract class StreamingSession {
     private void cleanUp() {
         jobService.removeJobByTag(DownloadJob.STREAMING_JOB_TAG);
         jobService.submitJob(new FileRemoveJob(storageDir, true));
-    }
-
-    private void setStreamingState(StreamingState newState) {
-        StreamingState lastState = this.streamingState;
-        this.streamingState = newState;
-
-        if (lastState != newState) {
-            StateChangeListener stateChangeListener = getStateChangeListener();
-            if (stateChangeListener != null) {
-                try {
-                    stateChangeListener.stateChanged(streamingState);
-                } catch (Exception e) {
-                    Timber.e(e, "Strange error");
-                }
-            }
-        }
     }
 
     public boolean isProgressing() {
@@ -178,9 +158,19 @@ public abstract class StreamingSession {
             buffer.push(streamlet);
         }
 
-        StateChangeListener stateChangeListener = getStateChangeListener();
-        if (stateChangeListener != null) {
-            stateChangeListener.streamletDownloaded(streamlet);
+        StreamingListener streamingListener = getStreamingListener();
+        if (streamingListener != null) {
+            streamingListener.streamletDownloaded(streamlet);
+        }
+    }
+
+    /**
+     * Mark the end of the streaming session because the stream has ended.
+     */
+    private void noMoreStreamlet() {
+        StreamingListener streamingListener = getStreamingListener();
+        if (streamingListener != null) {
+            streamingListener.noMoreStreamlet();
         }
     }
 
@@ -200,12 +190,12 @@ public abstract class StreamingSession {
         return buffer.poll();
     }
 
-    public void setStateChangeListener(StateChangeListener listener) {
-        this.stateChangeListener = new WeakReference<>(listener);
+    public void setStreamingListener(StreamingListener listener) {
+        this.streamingListener = new WeakReference<>(listener);
     }
 
-    public StateChangeListener getStateChangeListener() {
-        WeakReference<StateChangeListener> ref = this.stateChangeListener;
+    public StreamingListener getStreamingListener() {
+        WeakReference<StreamingListener> ref = this.streamingListener;
         if (ref == null) {
             return null;
         }
@@ -224,12 +214,15 @@ public abstract class StreamingSession {
             return;
         }
 
-        Pair<MediaPresentationDescription, Long> mpdResponse = streamingService.getMpd(getVideo(), lastSegmentId);
+        Pair<MediaPresentationDescription, Pair<Long, Boolean>> mpdResponse =
+                streamingService.getMpd(getVideo(), lastSegmentId);
+
         if (mpdResponse == null) {
             throw new StreamingException("Unable to download MPD for video", getVideo().getVideoId());
         }
 
-        this.lastSegmentId = mpdResponse.second;
+        this.lastSegmentId = mpdResponse.second.first;
+        boolean streamEnded = mpdResponse.second.second;
 
         try {
             Period period = mpdResponse.first.getPeriod(0);
@@ -247,6 +240,7 @@ public abstract class StreamingSession {
             int lastSegmentNum = oneRepr.getLastSegmentNum(C.UNKNOWN_TIME_US);
             int segmentCount = 0;
 
+            SegmentLoop:
             for (int i = firstSegmentNum; i <= lastSegmentNum; ++i) {
                 ArrayList<Pair<Format, Uri>> resolutions = new ArrayList<>(3);
 
@@ -254,12 +248,30 @@ public abstract class StreamingSession {
                 for (Representation repr_ : reprs) {
                     MultiSegmentRepresentation repr = (MultiSegmentRepresentation) repr_;
                     Uri uri = repr.getSegmentUrl(i).getUri();
-
                     resolutions.add(new Pair<>(repr.format, uri));
                 }
 
+                // get the media name (last part of URI) and use that to
+                // know if this streamlet has been downloaded before
+                String streamletName = resolutions.get(0).second.getLastPathSegment();
+                if (lastStreamletName != null && streamletName.compareTo(lastStreamletName) <= 0) {
+                    // no longer need this segment
+                    continue SegmentLoop;
+                }
+
+                lastStreamletName = streamletName;
+
+                boolean isLastStreamlet = false;
+                if (streamEnded && i == lastSegmentNum) {
+                    isLastStreamlet = true;
+                }
+
                 Streamlet streamlet = new Streamlet(this.video,
-                        this.storageDir, resolutions);
+                        this.storageDir,
+                        resolutions,
+                        streamletName,
+                        isLastStreamlet);
+
                 streamlet.setStatus(PENDING);
 
                 jobService.submitJob(new SegmentDownloadJob(this, streamlet));
@@ -299,7 +311,7 @@ public abstract class StreamingSession {
         String path = quality.second.toString();
         // just take the part of the path after the prefix
         if (path.startsWith(Config.VIDEO_FILES_PREFIX)) {
-            path = path.substring(Config.VIDEO_FILES_PREFIX.length() + 1);
+            path = path.substring(Config.VIDEO_FILES_PREFIX.length());
         }
 
         File file = streamlet.getTargetFile();
@@ -343,19 +355,25 @@ public abstract class StreamingSession {
             Timber.e(e, "Error while streaming streamlet from '%s'", path);
             throw new StreamingException("Error streaming segment from " + path, e,
                     getVideo().getVideoId());
+
+        } finally {
+            // signal the end of stream
+            if (streamlet.isLast()) {
+                noMoreStreamlet();
+            }
         }
     }
 
-    public interface StateChangeListener {
-
-        void stateChanged(StreamingState newState);
+    public interface StreamingListener {
 
         void streamletDownloaded(Streamlet streamlet);
+
+        void noMoreStreamlet();
 
     }
 
 
-    public static class Streamlet {
+    public static class Streamlet implements Serializable {
 
         @Getter
         private final Video video;
@@ -367,6 +385,12 @@ public abstract class StreamingSession {
         private final File targetFile;
 
         @Getter
+        private final String mediaName;
+
+        @Getter
+        private final boolean last;
+
+        @Getter
         @Setter
         private Pair<Format, Uri> selectedQualityt;
 
@@ -376,18 +400,20 @@ public abstract class StreamingSession {
 
         public Streamlet(Video video,
                          File videoDir,
-                         List<Pair<Format, Uri>> qualities) {
+                         List<Pair<Format, Uri>> qualities,
+                         String mediaName,
+                         boolean isLast) {
 
             this.video = video;
             this.qualities = qualities;
             this.status = Status.PENDING;
             this.selectedQualityt = null;
+            this.mediaName = mediaName;
+            this.last = isLast;
 
             // create a place holder file object (for this stream to be downloaded later)
             // file name matching the last part of the URI
-            Uri oneUri = qualities.get(0).second;
-            String fileName = oneUri.getLastPathSegment();
-            this.targetFile = new File(videoDir, fileName);
+            this.targetFile = new File(videoDir, mediaName);
         }
 
         public enum Status {

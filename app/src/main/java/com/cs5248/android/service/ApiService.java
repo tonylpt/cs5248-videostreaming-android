@@ -133,13 +133,15 @@ public class ApiService {
      * Read the MPD for the video. If lastSegmentId is not null, the MPD only includes
      * the segments after the lastSegmentId (exclusive).
      *
-     * @return a tuple of InputStream and the new last segment index (of the returned MPD).
+     * @return a tuple: (InputStream, tuple(last segment index (of the returned MPD), stream ended))
      */
-    public Pair<InputStream, Long> streamMPD(Long videoId, Long lastSegmentId) {
+    public Pair<InputStream, Pair<Long, Boolean>> streamMPD(Long videoId, Long lastSegmentId) {
         try {
             Response response = getApi().streamMPD(videoId, lastSegmentId);
             InputStream stream = response.getBody().in();
             Long newLastSegmentId = null;
+            boolean streamEnded = false;
+
             for (Header header : response.getHeaders()) {
                 if (header.getName().equals("lastSegmentId")) {
                     try {
@@ -147,9 +149,15 @@ public class ApiService {
                     } catch (Exception e) {
                         Timber.e(e, "Error parsing the lastSegmentId header from server.");
                     }
+                } else if (header.getName().equals("streamEnded")) {
+                    try {
+                        streamEnded = Boolean.parseBoolean(header.getValue());
+                    } catch (Exception e) {
+                        Timber.e(e, "Error parsing the streamEnded header from server.");
+                    }
                 }
             }
-            return new Pair<>(stream, newLastSegmentId);
+            return new Pair<>(stream, new Pair<>(newLastSegmentId, streamEnded));
         } catch (Exception e) {
             Timber.e(e, "Error streaming MPD from server.");
             return null;
