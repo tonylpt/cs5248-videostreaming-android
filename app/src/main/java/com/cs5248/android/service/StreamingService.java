@@ -105,9 +105,9 @@ public class StreamingService {
     /**
      * @return the tuple containing the parsed MPD and the lastSegmentId returned by server.
      */
-    public Pair<MediaPresentationDescription, Long> getMpd(Video video, Long lastSegmentId) {
+    public Pair<MediaPresentationDescription, Pair<Long, Boolean>> getMpd(Video video, Long lastSegmentId) {
 
-        Pair<InputStream, Long> response = apiService.streamMPD(video.getVideoId(), lastSegmentId);
+        Pair<InputStream, Pair<Long, Boolean>> response = apiService.streamMPD(video.getVideoId(), lastSegmentId);
         if (response == null) {
             return null;
         }

@@ -8,7 +8,6 @@ import com.cs5248.android.R;
 import com.cs5248.android.model.Video;
 import com.cs5248.android.service.StreamingService;
 import com.cs5248.android.service.StreamingSession;
-import com.cs5248.android.service.StreamingState;
 import com.cs5248.android.util.BaseActivity;
 import com.cs5248.android.util.Util;
 
@@ -18,7 +17,8 @@ import butterknife.Bind;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-import static com.cs5248.android.service.StreamingSession.StateChangeListener;
+import static com.cs5248.android.service.StreamingSession.StreamingListener;
+import static com.cs5248.android.service.StreamingSession.Streamlet;
 
 
 abstract class StreamingActivity extends BaseActivity {
@@ -41,7 +41,7 @@ abstract class StreamingActivity extends BaseActivity {
         Video video = Util.getParcelable(this, "video", Video.class);
         if (video != null) {
             this.session = streamingService.openSession(video, isLiveStreaming());
-            this.session.setStateChangeListener(streamingListener);
+            this.session.setStreamingListener(streamingListener);
         } else {
             Timber.e("Could not find a video parcelable for this activity");
         }
@@ -49,6 +49,23 @@ abstract class StreamingActivity extends BaseActivity {
         if (session == null) {
             playPauseButton.setEnabled(false);
         }
+    }
+
+
+    private void onStreamletDownloaded(Streamlet streamlet) {
+        // just to demonstrate that the UI can be safely updated from here
+        // this method may not actually be needed.
+
+        // we can just set up a polling loop when the streaming starts and
+        // poll the session by:  session.getNextStreamlet() when we need the next
+        // segment. Once we finish playing the segment, clean it up by:
+        // session.clearStreamlet(streamlet)
+
+        playPauseButton.setText("Downloaded: " + streamlet.getTargetFile().getName());
+    }
+
+    private void onStreamingEnded() {
+        playPauseButton.setText("No more segment");
     }
 
     protected abstract boolean isLiveStreaming();
@@ -66,16 +83,15 @@ abstract class StreamingActivity extends BaseActivity {
         }
     }
 
-    private final StateChangeListener streamingListener = new StateChangeListener() {
-
+    private final StreamingListener streamingListener = new StreamingListener() {
         @Override
-        public void stateChanged(StreamingState newState) {
-
+        public void streamletDownloaded(Streamlet streamlet) {
+            runOnUiThread(() -> onStreamletDownloaded(streamlet));
         }
 
         @Override
-        public void streamletDownloaded(StreamingSession.Streamlet streamlet) {
-
+        public void noMoreStreamlet() {
+            runOnUiThread(() -> onStreamingEnded());
         }
     };
 
