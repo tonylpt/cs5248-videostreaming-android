@@ -24,6 +24,7 @@ import retrofit.client.OkClient;
 import retrofit.client.Response;
 import retrofit.converter.JacksonConverter;
 import retrofit.mime.TypedFile;
+import retrofit.mime.TypedInput;
 import rx.Observable;
 import timber.log.Timber;
 
@@ -157,10 +158,17 @@ public class ApiService {
 
     /**
      * Stream a file from the server as an InputStream.
+     *
+     * @return a tuple of InputStream and the content length
      */
-    public InputStream streamFile(String path) throws IOException {
+    public Pair<InputStream, Long> streamVideoFile(String path) throws IOException {
         Response response = getApi().streamVideo(path);
-        return response.getBody().in();
+        TypedInput body = response.getBody();
+        InputStream stream = body.in();
+        long length = body.length();
+
+        return new Pair<>(stream, length);
     }
+
 }
 

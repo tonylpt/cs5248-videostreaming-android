@@ -2,6 +2,7 @@ package com.cs5248.android.service;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.util.Pair;
 
 import com.cs5248.android.Config;
@@ -32,6 +33,9 @@ import lombok.Getter;
 import lombok.Setter;
 import timber.log.Timber;
 
+import static com.cs5248.android.service.StreamingSession.Streamlet.Status.DOWNLOADED;
+import static com.cs5248.android.service.StreamingSession.Streamlet.Status.ERROR;
+import static com.cs5248.android.service.StreamingSession.Streamlet.Status.PENDING;
 import static com.cs5248.android.service.StreamingState.ENDED;
 import static com.cs5248.android.service.StreamingState.NOT_STARTED;
 import static com.cs5248.android.service.StreamingState.PROGRESSING;
@@ -66,6 +70,11 @@ public abstract class StreamingSession {
      * return the new segments.
      */
     private Long lastSegmentId;
+
+    /**
+     * The download speed of the last streamlet, in bytes per second.
+     */
+    private float lastSpeed;
 
     protected StreamingSession(Context context,
                                StreamingService streamingService,
@@ -195,10 +204,11 @@ public abstract class StreamingSession {
                     resolutions.add(new Pair<>(repr.format, uri));
                 }
 
-                StreamingSegment segment = new StreamingSegment(this.video,
+                Streamlet streamlet = new Streamlet(this.video,
                         this.storageDir, resolutions);
+                streamlet.setStatus(PENDING);
 
-                jobService.submitJob(new SegmentDownloadJob(this, segment));
+                jobService.submitJob(new SegmentDownloadJob(this, streamlet));
                 ++segmentCount;
             }
 
@@ -216,40 +226,57 @@ public abstract class StreamingSession {
      * adaptively choose the quality level for the next download. Will ignore if the segment is
      * no longer needed (esp. in live streaming).
      */
-    public void _jobPerformDownloadSegment(StreamingSegment segment) {
-        // select a quality level
-        // download the segment
-
+    public void _jobPerformDownloadSegment(Streamlet streamlet) {
         if (!isProgressing()) {
             return;
         }
 
-        // todo select quality
-        Pair<Format, Uri> resolution = segment.getResolutions().get(0);
+        // todo select quality based on last speed
+
+
+        Pair<Format, Uri> resolution = streamlet.getQualities().get(0);
         String path = resolution.second.toString();
         // just take the part of the path after the prefix
         if (path.startsWith(Config.VIDEO_FILES_PREFIX)) {
             path = path.substring(Config.VIDEO_FILES_PREFIX.length() + 1);
         }
 
-        File file = segment.getTargetFile();
+        File file = streamlet.getTargetFile();
 
         try {
             if (!file.exists() || !file.isFile()) {
                 file.createNewFile();
             }
 
-            try (InputStream in = streamingService.streamSegment(path);
+            // Do some statistics here
+            long startTime = SystemClock.elapsedRealtime();
+
+            Pair<InputStream, Long> downloading = streamingService.getStreamlet(path);
+
+            try (InputStream in = downloading.first;
                  FileOutputStream out = new FileOutputStream(file)) {
 
                 IOUtils.copy(in, out);
-
-                // todo notify client
             }
 
-            Timber.d("Downloaded file: %s", path);
+            // todo push the streamlet into a queue
+
+            long endTime = SystemClock.elapsedRealtime();
+            long duration = endTime - startTime;
+            duration = duration == 0 ? 1 : duration;
+
+            long contentLength = downloading.second;
+
+            float speed = (float) contentLength / duration;
+            this.lastSpeed = speed;
+
+            streamlet.setStatus(DOWNLOADED);
+            Timber.d("Downloaded file: %s, at speed %s bps", path, speed);
+
         } catch (IOException e) {
-            Timber.e(e, "Error while streaming segment from '%s'", path);
+            streamlet.setStatus(ERROR);
+
+            Timber.e(e, "Error while streaming streamlet from '%s'", path);
             throw new StreamingException("Error streaming segment from " + path, e,
                     getVideo().getVideoId());
         }
@@ -261,13 +288,13 @@ public abstract class StreamingSession {
     }
 
 
-    public static class StreamingSegment {
+    public static class Streamlet {
 
         @Getter
         private final Video video;
 
         @Getter
-        private final List<Pair<Format, Uri>> resolutions;
+        private final List<Pair<Format, Uri>> qualities;
 
         @Getter
         private final File targetFile;
@@ -280,18 +307,18 @@ public abstract class StreamingSession {
         @Setter
         private Status status;
 
-        public StreamingSegment(Video video,
-                                File videoDir,
-                                List<Pair<Format, Uri>> resolutions) {
+        public Streamlet(Video video,
+                         File videoDir,
+                         List<Pair<Format, Uri>> qualities) {
 
             this.video = video;
-            this.resolutions = resolutions;
+            this.qualities = qualities;
             this.status = Status.PENDING;
             this.selectedFormat = null;
 
             // create a place holder file object (for this stream to be downloaded later)
             // file name matching the last part of the URI
-            Uri oneUri = resolutions.get(0).second;
+            Uri oneUri = qualities.get(0).second;
             String fileName = oneUri.getLastPathSegment();
             this.targetFile = new File(videoDir, fileName);
         }

@@ -125,8 +125,11 @@ public class StreamingService {
         }
     }
 
-    public InputStream streamSegment(String path) throws IOException {
-        return apiService.streamFile(path);
+    /**
+     * @return a tuple of InputStream and the content length
+     */
+    public Pair<InputStream, Long> getStreamlet(String path) throws IOException {
+        return apiService.streamVideoFile(path);
     }
 
     public StreamingSession openSession(Video video) {

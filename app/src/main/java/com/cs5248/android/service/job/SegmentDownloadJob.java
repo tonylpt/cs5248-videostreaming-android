@@ -12,10 +12,10 @@ import com.cs5248.android.service.StreamingSession;
  */
 public class SegmentDownloadJob extends DownloadJob {
 
-    private final StreamingSession.StreamingSegment segment;
+    private final StreamingSession.Streamlet segment;
 
     public SegmentDownloadJob(StreamingSession session,
-                              StreamingSession.StreamingSegment segment) {
+                              StreamingSession.Streamlet segment) {
 
         super(session);
         this.segment = segment;
