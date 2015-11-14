@@ -347,7 +347,7 @@ public abstract class StreamingSession {
 
             // check if we need to increase / decrease the quality index
             long allowedDuration = getVideo().getSegmentDuration();
-            if (duration >= allowedDuration) {
+            if (duration >= allowedDuration * .8f) {
                 // if the streamlet took longer time to download, decrease the quality level for the
                 // next streamlet
                 ++this.qualityIndex;
