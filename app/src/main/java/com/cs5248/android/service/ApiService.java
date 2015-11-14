@@ -135,7 +135,7 @@ public class ApiService {
      *
      * @return a tuple: (InputStream, tuple(last segment index (of the returned MPD), stream ended))
      */
-    public Pair<InputStream, Pair<Long, Boolean>> streamMPD(Long videoId, Long lastSegmentId) {
+    public Pair<InputStream, Pair<Long, Boolean>> streamMpd(Long videoId, Long lastSegmentId) {
         try {
             Response response = getApi().streamMPD(videoId, lastSegmentId);
             InputStream stream = response.getBody().in();

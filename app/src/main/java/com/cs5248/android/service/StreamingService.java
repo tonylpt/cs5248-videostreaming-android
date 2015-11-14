@@ -105,9 +105,9 @@ public class StreamingService {
     /**
      * @return the tuple containing the parsed MPD and the lastSegmentId returned by server.
      */
-    public Pair<MediaPresentationDescription, Pair<Long, Boolean>> getMpd(Video video, Long lastSegmentId) {
+    public StreamMpdResult getMpd(Video video, Long lastSegmentId) {
 
-        Pair<InputStream, Pair<Long, Boolean>> response = apiService.streamMPD(video.getVideoId(), lastSegmentId);
+        Pair<InputStream, Pair<Long, Boolean>> response = apiService.streamMpd(video.getVideoId(), lastSegmentId);
         if (response == null) {
             return null;
         }
@@ -118,7 +118,7 @@ public class StreamingService {
             }
 
             MediaPresentationDescription mpd = mpdParser.parse(video.getBaseUrl(), mpdStream);
-            return new Pair<>(mpd, response.second);
+            return new StreamMpdResult(mpd, response.second.first, response.second.second);
 
         } catch (Exception e) {
             Timber.e(e, "Error reading MPD stream");
@@ -129,8 +129,9 @@ public class StreamingService {
     /**
      * @return a tuple of InputStream and the content length
      */
-    public Pair<InputStream, Long> getStreamlet(String path) throws IOException {
-        return apiService.streamVideoFile(path);
+    public GetStreamletResult getStreamlet(String path) throws IOException {
+        Pair<InputStream, Long> response =  apiService.streamVideoFile(path);
+        return new GetStreamletResult(response.first, response.second);
     }
 
     public StreamingSession openSession(Video video, boolean live) {
@@ -152,6 +153,44 @@ public class StreamingService {
                     getDownloadDirForVideo(video),
                     live);
         }
+    }
+
+    /**
+     * Temporary container for streaming an MPD.
+     */
+    public static class StreamMpdResult {
+
+        public final MediaPresentationDescription mpd;
+
+        public final Long lastSegmentId;
+
+        public final Boolean isFinalSet;
+
+        public StreamMpdResult(MediaPresentationDescription mpd,
+                               Long lastSegmentId,
+                               Boolean isFinalSet) {
+
+            this.mpd = mpd;
+            this.lastSegmentId = lastSegmentId;
+            this.isFinalSet = isFinalSet;
+        }
+
+    }
+
+    /**
+     * A temporary container for the results of streaming a streamlet video file.
+     */
+    public static class GetStreamletResult {
+
+        public final InputStream stream;
+
+        public final long contentLength;
+
+        public GetStreamletResult(InputStream stream, long contentLength) {
+            this.stream = stream;
+            this.contentLength = contentLength;
+        }
+
     }
 
 }

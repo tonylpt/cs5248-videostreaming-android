@@ -14,7 +14,6 @@ import com.cs5248.android.service.job.SegmentDownloadJob;
 import com.google.android.exoplayer.C;
 import com.google.android.exoplayer.chunk.Format;
 import com.google.android.exoplayer.dash.mpd.AdaptationSet;
-import com.google.android.exoplayer.dash.mpd.MediaPresentationDescription;
 import com.google.android.exoplayer.dash.mpd.Period;
 import com.google.android.exoplayer.dash.mpd.Representation;
 
@@ -35,6 +34,8 @@ import lombok.Getter;
 import lombok.Setter;
 import timber.log.Timber;
 
+import static com.cs5248.android.service.StreamingService.GetStreamletResult;
+import static com.cs5248.android.service.StreamingService.StreamMpdResult;
 import static com.cs5248.android.service.StreamingSession.Streamlet.Status.DOWNLOADED;
 import static com.cs5248.android.service.StreamingSession.Streamlet.Status.ERROR;
 import static com.cs5248.android.service.StreamingSession.Streamlet.Status.PENDING;
@@ -214,18 +215,20 @@ public abstract class StreamingSession {
             return;
         }
 
-        Pair<MediaPresentationDescription, Pair<Long, Boolean>> mpdResponse =
-                streamingService.getMpd(getVideo(), lastSegmentId);
+        StreamMpdResult mpdResult = streamingService.getMpd(getVideo(), lastSegmentId);
 
-        if (mpdResponse == null) {
+        if (mpdResult == null || mpdResult.mpd == null) {
             throw new StreamingException("Unable to download MPD for video", getVideo().getVideoId());
         }
 
-        this.lastSegmentId = mpdResponse.second.first;
-        boolean streamEnded = mpdResponse.second.second;
+        if (mpdResult.lastSegmentId != null) {
+            this.lastSegmentId = mpdResult.lastSegmentId;
+        }
+
+        boolean streamEnded = Boolean.TRUE.equals(mpdResult.isFinalSet);
 
         try {
-            Period period = mpdResponse.first.getPeriod(0);
+            Period period = mpdResult.mpd.getPeriod(0);
             AdaptationSet adaptationSet = period.adaptationSets.get(0);
             List<Representation> reprs = adaptationSet.representations;
 
@@ -305,7 +308,7 @@ public abstract class StreamingSession {
         }
 
         // todo select quality based on last speed, this is just a mock
-        streamlet.setSelectedQualityt(streamlet.getQualities().get(0));
+        streamlet.setSelectedQualityt(streamlet.getQualities().get(streamlet.getQualities().size() - 1));
 
         Pair<Format, Uri> quality = streamlet.getSelectedQualityt();
         String path = quality.second.toString();
@@ -324,21 +327,19 @@ public abstract class StreamingSession {
             // Do some statistics here
             long startTime = SystemClock.elapsedRealtime();
 
-            Pair<InputStream, Long> downloading = streamingService.getStreamlet(path);
+            GetStreamletResult getStreamletResult = streamingService.getStreamlet(path);
 
-            try (InputStream in = downloading.first;
+            try (InputStream in = getStreamletResult.stream;
                  FileOutputStream out = new FileOutputStream(file)) {
 
                 IOUtils.copy(in, out);
             }
 
-            streamletDownloaded(streamlet);
-
             long endTime = SystemClock.elapsedRealtime();
             long duration = endTime - startTime;
             duration = duration == 0 ? 1 : duration;
 
-            long contentLength = downloading.second;
+            long contentLength = getStreamletResult.contentLength;
 
             float speed = (float) contentLength / duration;
 
@@ -348,6 +349,9 @@ public abstract class StreamingSession {
 
             streamlet.setStatus(DOWNLOADED);
             Timber.d("Downloaded file: %s, at speed %s bps", path, speed);
+
+            // update the client
+            streamletDownloaded(streamlet);
 
         } catch (IOException e) {
             streamlet.setStatus(ERROR);
