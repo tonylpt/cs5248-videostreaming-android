@@ -16,6 +16,8 @@
         android:id="@+id/play_pause_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_weight="10"
+
         android:text="Play"/>
 
     <TextView
@@ -25,6 +27,16 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentTop="true"
         android:background="@android:color/transparent"
+        android:layout_weight="10"
+
         android:text="VOD"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/player_container_live"
+        android:layout_weight="80"
+
+        ></RelativeLayout>
 
 </LinearLayout>
