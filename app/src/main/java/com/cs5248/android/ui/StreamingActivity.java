@@ -142,7 +142,7 @@ abstract class StreamingActivity extends BaseActivity {
         StreamingSession.Streamlet streamlet = null;
         while((streamlet = session.getNextStreamlet()) == null){
             try {
-                Thread.sleep(500);
+                Thread.sleep(100);
                 if(streamEnded){
                     return null;
                 }

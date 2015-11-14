@@ -13,14 +13,29 @@
     tools:context="com.cs5248.android.ui.AboutActivity"
     >
 
+    <SurfaceView
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/player_container_vod"
+        android:layout_weight="40"
+        >
+        <SurfaceView
+            android:layout_width="0dp"
+            android:layout_height="0dp" />
+    </RelativeLayout>
 
     <Button
         android:id="@+id/play_pause_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentTop="true"
         android:text="Play"
-        android:layout_weight="10"/>
+        />
 
     <TextView
         android:id="@+id/title_text"
@@ -30,13 +45,6 @@
         android:layout_alignParentTop="true"
         android:background="@android:color/transparent"
         android:text="VOD"
-        android:layout_weight="10"/>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/player_container_vod"
-        android:layout_weight="80"
-        ></RelativeLayout>
+        />
 
 </LinearLayout>
