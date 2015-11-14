@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -310,7 +311,7 @@ public abstract class StreamingSession {
         String path = quality.second.toString();
         // just take the part of the path after the prefix
         if (path.startsWith(Config.VIDEO_FILES_PREFIX)) {
-            path = path.substring(Config.VIDEO_FILES_PREFIX.length() + 1);
+            path = path.substring(Config.VIDEO_FILES_PREFIX.length());
         }
 
         File file = streamlet.getTargetFile();
@@ -372,7 +373,7 @@ public abstract class StreamingSession {
     }
 
 
-    public static class Streamlet {
+    public static class Streamlet implements Serializable {
 
         @Getter
         private final Video video;

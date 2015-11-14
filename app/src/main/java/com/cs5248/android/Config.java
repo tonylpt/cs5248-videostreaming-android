@@ -12,7 +12,7 @@ public class Config {
 
     private static final String BASE_URL_AZURE = "http://tr-03155248.cloudapp.net";
 
-    public static final String SERVER_BASE_URL = BASE_URL_CUBIE;
+    public static final String SERVER_BASE_URL = BASE_URL_AZURE;
 
     public static final String VIDEO_FILES_PREFIX = "/video_files/";
 
