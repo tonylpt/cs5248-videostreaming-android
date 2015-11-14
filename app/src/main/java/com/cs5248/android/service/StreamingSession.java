@@ -3,7 +3,6 @@ package com.cs5248.android.service;
 import android.content.Context;
 import android.net.Uri;
 import android.os.SystemClock;
-import android.util.Pair;
 
 import com.cs5248.android.Config;
 import com.cs5248.android.model.Video;
@@ -26,6 +25,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -36,6 +36,7 @@ import timber.log.Timber;
 
 import static com.cs5248.android.service.StreamingService.GetStreamletResult;
 import static com.cs5248.android.service.StreamingService.StreamMpdResult;
+import static com.cs5248.android.service.StreamingSession.Streamlet.Quality;
 import static com.cs5248.android.service.StreamingSession.Streamlet.Status.DOWNLOADED;
 import static com.cs5248.android.service.StreamingSession.Streamlet.Status.ERROR;
 import static com.cs5248.android.service.StreamingSession.Streamlet.Status.PENDING;
@@ -82,15 +83,15 @@ public abstract class StreamingSession {
     private Long lastSegmentId;
 
     /**
-     * The download speed of the last streamlet, in bytes per second.
-     */
-    private float lastSpeed;
-
-    /**
      * To test whether a new streamlet is a new one, compare its name to the name of the last
      * obtained streamlet.
      */
     private String lastStreamletName;
+
+    /**
+     * The quality index used for choosing the quality level for the next segment download.
+     */
+    private int qualityIndex = 0;
 
 
     protected StreamingSession(Context context,
@@ -230,12 +231,17 @@ public abstract class StreamingSession {
         try {
             Period period = mpdResult.mpd.getPeriod(0);
             AdaptationSet adaptationSet = period.adaptationSets.get(0);
-            List<Representation> reprs = adaptationSet.representations;
+            ArrayList<Representation> reprs = new ArrayList<>(adaptationSet.representations);
 
             // ensures we have all three representations
             if (reprs.size() < 3) {
                 throw new IllegalStateException("Expected 3 representations in the MPD");
             }
+
+            // sort the reprs by descending bitrates;
+            Collections.sort(reprs,
+                    (repr1, repr2) -> repr2.format.bitrate - repr1.format.bitrate);
+
 
             // get the segments
             MultiSegmentRepresentation oneRepr = (MultiSegmentRepresentation) reprs.get(0);
@@ -245,18 +251,18 @@ public abstract class StreamingSession {
 
             SegmentLoop:
             for (int i = firstSegmentNum; i <= lastSegmentNum; ++i) {
-                ArrayList<Pair<Format, Uri>> resolutions = new ArrayList<>(3);
+                ArrayList<Quality> qualities = new ArrayList<>(3);
 
-                // constructing a list of format-resolutions pairs
+                // constructing a list of format-uri pairs
                 for (Representation repr_ : reprs) {
                     MultiSegmentRepresentation repr = (MultiSegmentRepresentation) repr_;
                     Uri uri = repr.getSegmentUrl(i).getUri();
-                    resolutions.add(new Pair<>(repr.format, uri));
+                    qualities.add(new Quality(repr.format, uri));
                 }
 
                 // get the media name (last part of URI) and use that to
                 // know if this streamlet has been downloaded before
-                String streamletName = resolutions.get(0).second.getLastPathSegment();
+                String streamletName = qualities.get(0).uri.getLastPathSegment();
                 if (lastStreamletName != null && streamletName.compareTo(lastStreamletName) <= 0) {
                     // no longer need this segment
                     continue SegmentLoop;
@@ -271,7 +277,7 @@ public abstract class StreamingSession {
 
                 Streamlet streamlet = new Streamlet(this.video,
                         this.storageDir,
-                        resolutions,
+                        qualities,
                         streamletName,
                         isLastStreamlet);
 
@@ -307,11 +313,11 @@ public abstract class StreamingSession {
             return;
         }
 
-        // todo select quality based on last speed, this is just a mock
-        streamlet.setSelectedQualityt(streamlet.getQualities().get(streamlet.getQualities().size() - 1));
+        // choose a quality level based on the quality index adjusted from the last download
+        streamlet.setSelectedQuality(streamlet.getQualities().get(this.qualityIndex));
 
-        Pair<Format, Uri> quality = streamlet.getSelectedQualityt();
-        String path = quality.second.toString();
+        Quality quality = streamlet.getSelectedQuality();
+        String path = quality.uri.toString();
         // just take the part of the path after the prefix
         if (path.startsWith(Config.VIDEO_FILES_PREFIX)) {
             path = path.substring(Config.VIDEO_FILES_PREFIX.length());
@@ -335,20 +341,31 @@ public abstract class StreamingSession {
                 IOUtils.copy(in, out);
             }
 
+            // calculate the downloading duration
             long endTime = SystemClock.elapsedRealtime();
             long duration = endTime - startTime;
-            duration = duration == 0 ? 1 : duration;
 
-            long contentLength = getStreamletResult.contentLength;
-
-            float speed = (float) contentLength / duration;
-
-            // this last speed will be used to select the best quality
-            // the next time this method is called
-            this.lastSpeed = speed;
+            // check if we need to increase / decrease the quality index
+            long allowedDuration = getVideo().getSegmentDuration();
+            if (duration >= allowedDuration) {
+                // if the streamlet took longer time to download, decrease the quality level for the
+                // next streamlet
+                ++this.qualityIndex;
+                int maxIndex = streamlet.getQualities().size() - 1;
+                if (this.qualityIndex > maxIndex) {
+                    this.qualityIndex = maxIndex;
+                }
+            } else if (duration < allowedDuration / 2) {
+                // the network seems to be fast, increase quality level
+                --this.qualityIndex;
+                if (this.qualityIndex < 0) {
+                    this.qualityIndex = 0;
+                }
+            }
 
             streamlet.setStatus(DOWNLOADED);
-            Timber.d("Downloaded file: %s, at speed %s bps", path, speed);
+            Timber.d("Downloaded file: %s. Duration: %dms.Next quality index: %d",
+                    path, duration, this.qualityIndex);
 
             // update the client
             streamletDownloaded(streamlet);
@@ -383,7 +400,7 @@ public abstract class StreamingSession {
         private final Video video;
 
         @Getter
-        private final List<Pair<Format, Uri>> qualities;
+        private final List<Quality> qualities;
 
         @Getter
         private final File targetFile;
@@ -396,7 +413,7 @@ public abstract class StreamingSession {
 
         @Getter
         @Setter
-        private Pair<Format, Uri> selectedQualityt;
+        private Quality selectedQuality;
 
         @Getter
         @Setter
@@ -404,14 +421,14 @@ public abstract class StreamingSession {
 
         public Streamlet(Video video,
                          File videoDir,
-                         List<Pair<Format, Uri>> qualities,
+                         List<Quality> qualities,
                          String mediaName,
                          boolean isLast) {
 
             this.video = video;
             this.qualities = qualities;
             this.status = Status.PENDING;
-            this.selectedQualityt = null;
+            this.selectedQuality = null;
             this.mediaName = mediaName;
             this.last = isLast;
 
@@ -427,6 +444,19 @@ public abstract class StreamingSession {
             DOWNLOADED,
 
             ERROR
+
+        }
+
+        public static class Quality {
+
+            public final Format format;
+
+            public final Uri uri;
+
+            public Quality(Format format, Uri uri) {
+                this.format = format;
+                this.uri = uri;
+            }
 
         }
 
