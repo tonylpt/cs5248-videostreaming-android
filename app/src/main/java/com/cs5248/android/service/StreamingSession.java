@@ -25,7 +25,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -65,8 +67,15 @@ public abstract class StreamingSession {
     @Getter
     private volatile StreamingState streamingState;
 
-    @Setter
-    private StateChangeListener stateChangeListener;
+    /**
+     * Use WeakReference to avoid memory leak by the background threads.
+     */
+    private WeakReference<StateChangeListener> stateChangeListener;
+
+    /**
+     * To store the downloaded streamlets
+     */
+    private final LinkedList<Streamlet> buffer;
 
     /**
      * Stores the last segment ID returned from the server MPD. So that the next MPD only needs to
@@ -95,6 +104,7 @@ public abstract class StreamingSession {
         this.video = video;
         this.storageDir = storageDir;
         this.liveStreaming = liveStreaming;
+        this.buffer = new LinkedList<>();
 
         this.streamingState = NOT_STARTED;
     }
@@ -144,7 +154,9 @@ public abstract class StreamingSession {
     private void setStreamingState(StreamingState newState) {
         StreamingState lastState = this.streamingState;
         this.streamingState = newState;
+
         if (lastState != newState) {
+            StateChangeListener stateChangeListener = getStateChangeListener();
             if (stateChangeListener != null) {
                 try {
                     stateChangeListener.stateChanged(streamingState);
@@ -160,8 +172,13 @@ public abstract class StreamingSession {
     }
 
     private void streamletDownloaded(Streamlet streamlet) {
-        // todo push into queue
+        synchronized (buffer) {
+            // since all download jobs are executed in sequence, we can be
+            // sure that the streamlet are downloaded in order.
+            buffer.push(streamlet);
+        }
 
+        StateChangeListener stateChangeListener = getStateChangeListener();
         if (stateChangeListener != null) {
             stateChangeListener.streamletDownloaded(streamlet);
         }
@@ -173,6 +190,27 @@ public abstract class StreamingSession {
      */
     public void clearStreamlet(Streamlet streamlet) {
         jobService.submitJob(new FileRemoveJob(streamlet.getTargetFile(), false));
+    }
+
+    /**
+     * Called by the client to poll for the next available streamlet. This method will return
+     * right away. Returns null if there is no available streamlet.
+     */
+    public Streamlet getNextStreamlet() {
+        return buffer.poll();
+    }
+
+    public void setStateChangeListener(StateChangeListener listener) {
+        this.stateChangeListener = new WeakReference<>(listener);
+    }
+
+    public StateChangeListener getStateChangeListener() {
+        WeakReference<StateChangeListener> ref = this.stateChangeListener;
+        if (ref == null) {
+            return null;
+        }
+
+        return ref.get();
     }
 
     /**

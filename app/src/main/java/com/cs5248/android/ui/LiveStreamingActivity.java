@@ -17,4 +17,10 @@ public class LiveStreamingActivity extends StreamingActivity {
     protected int getLayoutId() {
         return R.layout.activity_live_streaming;
     }
+
+    @Override
+    protected boolean isLiveStreaming() {
+        return true;
+    }
+
 }

@@ -6,6 +6,7 @@ import android.os.SystemClock;
 import android.util.Pair;
 
 import com.cs5248.android.model.Video;
+import com.cs5248.android.model.VideoType;
 import com.cs5248.android.service.job.StoragePrepareJob;
 import com.google.android.exoplayer.dash.mpd.MediaPresentationDescription;
 import com.google.android.exoplayer.dash.mpd.MediaPresentationDescriptionParser;
@@ -132,18 +133,24 @@ public class StreamingService {
         return apiService.streamVideoFile(path);
     }
 
-    public StreamingSession openSession(Video video) {
-        return new StreamingSessionImpl(video);
+    public StreamingSession openSession(Video video, boolean live) {
+        if (live ^ video.getType() == VideoType.LIVE) {
+            throw new StreamingException("Video type and streaming type do not match. Expecting live=" + live,
+                    video.getVideoId());
+        }
+
+        return new StreamingSessionImpl(video, live);
     }
 
     private class StreamingSessionImpl extends StreamingSession {
 
-        public StreamingSessionImpl(Video video) {
+        public StreamingSessionImpl(Video video, boolean live) {
             super(context,
                     StreamingService.this,
                     StreamingService.this.jobService,
                     video,
-                    getDownloadDirForVideo(video));
+                    getDownloadDirForVideo(video),
+                    live);
         }
     }
 

@@ -19,4 +19,10 @@ public class VodPlaybackActivity extends StreamingActivity {
     protected int getLayoutId() {
         return R.layout.activity_vod_playback;
     }
+
+    @Override
+    protected boolean isLiveStreaming() {
+        return false;
+    }
+
 }
