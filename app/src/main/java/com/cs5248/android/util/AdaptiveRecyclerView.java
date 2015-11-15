@@ -63,4 +63,9 @@ public class AdaptiveRecyclerView extends RecyclerView {
             setVisibility(showEmptyView ? GONE : VISIBLE);
         }
     }
+
+    public void onResume() {
+        updateEmptyView();
+    }
+
 }

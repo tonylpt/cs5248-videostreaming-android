@@ -63,6 +63,12 @@ public class VideoListFragment extends BaseFragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        recyclerView.onResume();
+    }
+
+    @Override
     protected void injectFragment(ApplicationComponent component) {
         component.inject(this);
     }
