@@ -2,6 +2,7 @@ package com.cs5248.android.adapter;
 
 import android.content.Context;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.cs5248.android.R;
@@ -34,7 +35,10 @@ public class LiveAdapter extends VideoAdapter {
         return new ViewHolder(view);
     }
 
-    protected class ViewHolder extends VideoViewHolder {
+    protected class ViewHolder extends VideoAdapter.VideoViewHolder {
+
+        @Bind(R.id.previewer)
+        ImageView previewer;
 
         @Bind(R.id.status_display)
         CircleButton statusDisplay;
@@ -58,6 +62,9 @@ public class LiveAdapter extends VideoAdapter {
             titleText.setText(video.getTitle());
             dateText.setText(dateFormatter.format(video.getCreatedAt()));
             statusDisplay.setVisibility(video.getStatus() == VideoStatus.ERROR ? View.VISIBLE : View.INVISIBLE);
+
+            // load the video thumbnail
+            loadImage(previewer, video.buildThumbnailUri());
         }
     }
 }

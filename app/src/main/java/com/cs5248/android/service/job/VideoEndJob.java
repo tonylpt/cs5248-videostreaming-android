@@ -58,7 +58,10 @@ public class VideoEndJob extends UpdateJob {
     protected RetryConstraint shouldReRunOnThrowable(Throwable throwable,
                                                      int runCount,
                                                      int maxRunCount) {
-        // always retry
-        return RetryConstraint.RETRY;
+        if(runCount <= maxRunCount) {
+            return RetryConstraint.createExponentialBackoff(runCount, 1000);
+        }
+
+        return RetryConstraint.CANCEL;
     }
 }
