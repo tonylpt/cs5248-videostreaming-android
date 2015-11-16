@@ -126,12 +126,12 @@ public class RecordStep2 extends WizardStep<RecordingSession> {
     }
 
     private void initCameraRecorder() {
-        camera = CameraHelper.getDefaultCamera();
+        camera = CameraHelper.getDefaultCamera(getActivity());
 
         CamcorderProfile profile = this.camcorderProfile =
-                CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
+                CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
 
-        CameraHelper.setPreviewSizeAndOrientation(getContext(), camera, profile,
+        CameraHelper.setPreviewSizeAndOrientation(camera, profile,
                 PREVIEW_WIDTH, PREVIEW_HEIGHT);
 
         try {

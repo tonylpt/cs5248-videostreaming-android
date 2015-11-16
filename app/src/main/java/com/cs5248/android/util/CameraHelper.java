@@ -17,16 +17,15 @@
 package com.cs5248.android.util;
 
 import android.annotation.TargetApi;
-import android.content.Context;
+import android.app.Activity;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
-import android.media.CameraProfile;
 import android.os.Build;
-import android.view.Display;
 import android.view.Surface;
-import android.view.WindowManager;
 
 import java.util.List;
+
+import timber.log.Timber;
 
 /**
  * Adapted from CameraHelper class in MediaRecorder sample project.
@@ -81,8 +80,7 @@ public class CameraHelper {
         return optimalSize;
     }
 
-    public static void setPreviewSizeAndOrientation(Context context,
-                                                    Camera camera,
+    public static void setPreviewSizeAndOrientation(Camera camera,
                                                     CamcorderProfile profile,
                                                     int preferredWidth,
                                                     int preferredHeight) {
@@ -100,26 +98,6 @@ public class CameraHelper {
         profile.videoFrameHeight = height;
 
         params.setPreviewSize(width, height);
-        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-
-        if (display.getRotation() == Surface.ROTATION_0) {
-//            params.setPreviewSize(height, width);
-            camera.setDisplayOrientation(90);
-        }
-
-        if (display.getRotation() == Surface.ROTATION_90) {
-            params.setPreviewSize(width, height);
-        }
-
-        if (display.getRotation() == Surface.ROTATION_180) {
-//            params.setPreviewSize(height, width);
-        }
-
-        if (display.getRotation() == Surface.ROTATION_270) {
-//            params.setPreviewSize(width, height);
-            camera.setDisplayOrientation(180);
-        }
-
         camera.setParameters(params);
     }
 
@@ -128,21 +106,62 @@ public class CameraHelper {
      * @return the front-facing camera, otherwise return the default one.
      */
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
-    public static Camera getDefaultCamera() {
-        // Find the total number of cameras available
-        int mNumberOfCameras = Camera.getNumberOfCameras();
+    public static Camera getDefaultCamera(Activity activity) {
+        int numberOfCameras = Camera.getNumberOfCameras();
 
-        // Find the ID of the back-facing ("default") camera
+        // try to find the front camera
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-        for (int i = 0; i < mNumberOfCameras; i++) {
+        Camera camera = null;
+        for (int i = 0; i < numberOfCameras; i++) {
             Camera.getCameraInfo(i, cameraInfo);
             if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                return Camera.open(i);
-
+                camera = Camera.open(i);
+                break;
             }
         }
 
-        return Camera.open();
+        if (camera == null && numberOfCameras > 0) {
+            // get the first camera
+            Camera.getCameraInfo(0, cameraInfo);
+            camera = Camera.open(0);
+        }
+
+        if (camera == null) {
+            Timber.e("Device has no camera");
+            return null;
+        }
+
+        int rotation = activity
+                .getWindowManager()
+                .getDefaultDisplay()
+                .getRotation();
+
+        int degrees = 0;
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                degrees = 0;
+                break;
+            case Surface.ROTATION_90:
+                degrees = 90;
+                break;
+            case Surface.ROTATION_180:
+                degrees = 180;
+                break;
+            case Surface.ROTATION_270:
+                degrees = 270;
+                break;
+        }
+
+        int result;
+        if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            result = (cameraInfo.orientation + degrees) % 360;
+            result = (360 - result) % 360;  // compensate the mirror
+        } else {  // back-facing
+            result = (cameraInfo.orientation - degrees + 360) % 360;
+        }
+
+        camera.setDisplayOrientation(result);
+        return camera;
     }
 
 }
