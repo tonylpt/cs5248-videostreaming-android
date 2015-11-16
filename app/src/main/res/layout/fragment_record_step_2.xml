@@ -13,26 +13,16 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.cs5248.android.ui.AboutActivity">
 
-    <TextView
-        android:id="@+id/about_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentTop="true"
-        android:layout_weight="10"
-
-        android:text="Step 2" />
-
-    <com.cs5248.android.ui.CameraPreviewer
+    <TextureView
         android:id="@+id/camera_previewer"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="80" />
+        android:layout_height="fill_parent"
+        android:layout_weight="0.8"/>
 
     <Button
         android:id="@+id/record_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Start/Stop Recording." />
+        android:text="Start" />
 
 </LinearLayout>

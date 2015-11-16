@@ -1,6 +1,7 @@
 package com.cs5248.android.util;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,6 +44,17 @@ public abstract class BaseFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         ButterKnife.unbind(this);
+    }
+
+    protected void runOnUiThread(Runnable runnable) {
+        getActivity().runOnUiThread(runnable);
+    }
+
+    /**
+     * This must be called from the UI Thread
+     */
+    protected void runDelayed(Runnable runnable, long delayMillis) {
+        new Handler().postDelayed(runnable, delayMillis);
     }
 
     /**

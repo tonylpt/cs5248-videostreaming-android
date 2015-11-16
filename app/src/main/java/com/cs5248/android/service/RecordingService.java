@@ -12,6 +12,7 @@ import com.cs5248.android.service.job.VideoEndJob;
 import java.util.Date;
 
 import rx.Observable;
+import timber.log.Timber;
 
 /**
  * @author lpthanh
@@ -108,7 +109,15 @@ public class RecordingService {
             setCurrent(null, null);
 
             // mark video ends
-            jobService.submitJob(new VideoEndJob(video.getVideoId(), lastSegment.getSegmentId()));
+            long lastSegmentId;
+            if (lastSegment == null) {
+                lastSegmentId = 0;
+                Timber.w("Last segment is null");
+            } else {
+                lastSegmentId = lastSegment.getSegmentId();
+            }
+
+            jobService.submitJob(new VideoEndJob(video.getVideoId(), lastSegmentId));
             jobService.setUrgentMode(false);
         }
 

@@ -2,14 +2,15 @@ package com.cs5248.android.service;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.graphics.ImageFormat;
 import android.hardware.Camera;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.os.Environment;
+import android.os.FileObserver;
 import android.os.SystemClock;
 
 import com.cs5248.android.model.Video;
 import com.cs5248.android.model.VideoSegment;
-import com.cs5248.android.ui.CameraPreviewer;
 
 import org.apache.commons.io.IOUtils;
 
@@ -18,6 +19,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.Getter;
@@ -35,9 +40,12 @@ public abstract class RecordingSession {
 
     private final AtomicLong nextSegmentId = new AtomicLong();
 
+    private final ExecutorService cameraExec =
+            Executors.newSingleThreadExecutor(r -> new Thread(r, "camera-thread"));
+
     private final RecordingService service;
 
-    private final SimulationThread simulationThread;
+//    private final SimulationThread simulationThread;
 
     @Getter
     private final Video video;
@@ -54,13 +62,16 @@ public abstract class RecordingSession {
     @Setter
     private StateChangeListener stateChangeListener;
 
+    private ChunkedRecorderWrapper recorderWrapper;
+
+
     protected RecordingSession(Context context, RecordingService service, Video video) {
         // validate
         Objects.requireNonNull(video);
         Objects.requireNonNull(video.getVideoId());
 
         this.service = service;
-        this.simulationThread = new SimulationThread(context, this, 4, 3000);
+//        this.simulationThread = new SimulationThread(context, this, 4, 3000);
         this.video = video;
         this.recordingState = NOT_STARTED;
 
@@ -74,15 +85,25 @@ public abstract class RecordingSession {
     protected abstract void onSegmentRecorded(Video video, VideoSegment segment);
 
 
-    public final void startRecording() {
+    public final void startRecording(Camera camera,
+                                     CamcorderProfile profile,
+                                     MediaRecorder recorder,
+                                     int segmentDuration,
+                                     int segmentsPerStreak) {
+
         if (recordingState != NOT_STARTED) {
             Timber.w("Cannot start recording when state=%s", recordingState);
             return;
         }
 
         setRecordingState(PROGRESSING);
-        simulationThread.start();
+//        simulationThread.start();
         onRecordingStarted(video);
+        recorderWrapper = new ChunkedRecorderWrapper(camera,
+                profile,
+                recorder,
+                segmentDuration,
+                segmentsPerStreak);
     }
 
     public final void endRecording() {
@@ -91,8 +112,8 @@ public abstract class RecordingSession {
             return;
         }
 
-        simulationThread.stopSimulating();
-        recordingEnded();
+//        simulationThread.stopSimulating();
+        recorderWrapper.stop();
     }
 
     private void segmentRecorded(VideoSegment segment) {
@@ -101,9 +122,9 @@ public abstract class RecordingSession {
     }
 
     private void recordingEnded() {
-        setRecordingState(ENDED);
         onRecordingEnded(video, currentSegment);
         currentSegment = null;
+        setRecordingState(ENDED);
     }
 
     private void recordingEndedWithError(Throwable error) {
@@ -119,38 +140,6 @@ public abstract class RecordingSession {
         segment.setSegmentId(nextSegmentId.getAndAdd(1));
         segment.setOriginalExtension("mp4");
         return segment;
-    }
-
-    public void setPreviewer(CameraPreviewer previewer) {
-
-    }
-
-    public Camera initCamera(int frameWidth, int frameHeight, int fps) {
-        Camera camera = null;
-        Camera.CameraInfo info = new Camera.CameraInfo();
-        int numCameras = Camera.getNumberOfCameras();
-        for (int i = 0; i <
-                numCameras; i++) {
-            Camera.getCameraInfo(i, info);
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-                camera = Camera.open(i);
-                break;
-            }
-        }
-        if (camera == null) {
-            camera = Camera.open();
-        }
-        if (camera == null) {
-            throw new RuntimeException("Unable to open camera");
-        }
-
-        Camera.Parameters parms = camera.getParameters();
-        parms.setPreviewFormat(ImageFormat.YV12);
-        parms.setPreviewSize(frameWidth, frameHeight);
-        parms.setPreviewFrameRate(fps);
-        camera.setParameters(parms);
-
-        return camera;
     }
 
     private void setRecordingState(RecordingState newState) {
@@ -187,9 +176,208 @@ public abstract class RecordingSession {
         return getRecordingState() == PROGRESSING;
     }
 
+    public void runOnCameraThread(Runnable runnable, boolean wait) {
+        if (wait) {
+            Future f = cameraExec.submit(runnable);
+            try {
+                f.get();
+            } catch (ExecutionException e) {
+                Timber.w(e, "Error executing camera task");
+            } catch (InterruptedException e) {
+                Timber.w(e, "Interrupted!");
+            }
+        } else {
+            cameraExec.execute(runnable);
+        }
+    }
+
+    public void runOnCameraThread(Runnable runnable) {
+        this.runOnCameraThread(runnable, false);
+    }
+
+    public void dispose() {
+        cameraExec.shutdown();
+    }
+
     public interface StateChangeListener {
 
         void stateChanged(RecordingState newState);
+    }
+
+    private class ChunkedRecorderWrapper implements MediaRecorder.OnInfoListener {
+
+        private final Camera camera;
+
+        private final CamcorderProfile profile;
+
+        private final MediaRecorder mediaRecorder;
+
+        private final int segmentDuration;
+
+        private final int streakDuration;
+
+        private FileObserver currentFileObserver;
+
+        private VideoSegment currentSegment;
+
+        private volatile String lastSegmentPath;
+
+        private volatile long lastStartMillis;
+
+        private volatile boolean recording;
+
+        private volatile boolean stopped;
+
+        private final Object recorderLock = new Object();
+
+        public ChunkedRecorderWrapper(Camera camera,
+                                      CamcorderProfile profile,
+                                      MediaRecorder mediaRecorder,
+                                      int segmentDuration,
+                                      int segmentsPerStreak) {
+
+            this.camera = camera;
+            this.profile = profile;
+            this.mediaRecorder = mediaRecorder;
+            this.segmentDuration = segmentDuration;
+            this.streakDuration = segmentDuration * segmentsPerStreak;
+//            this.camera.release();
+            reinitRecorder();
+        }
+
+        private void reinitRecorder() {
+            synchronized (recorderLock) {
+                camera.unlock();
+                mediaRecorder.setCamera(camera);
+                mediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+                mediaRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
+                mediaRecorder.setProfile(profile);
+                mediaRecorder.setMaxDuration(streakDuration);
+                mediaRecorder.setOnInfoListener(this);
+
+                VideoSegment segment = this.currentSegment = createNextSegment();
+                String fileName = "video-" + segment.getSegmentId() + "." + segment.getOriginalExtension();
+
+                File outputFile = new File(recordDir, fileName);
+                segment.setOriginalPath(outputFile.getAbsolutePath());
+
+                try {
+                    if (!outputFile.createNewFile()) {
+                        throw new IOException("Unable to create a new file: " + outputFile);
+                    }
+
+                    String outputPath = outputFile.getAbsolutePath();
+                    mediaRecorder.setOutputFile(outputPath);
+
+                    observeWriteEnd(outputPath);
+
+                    mediaRecorder.prepare();
+                    mediaRecorder.start();
+
+                    recording = true;
+                    lastStartMillis = SystemClock.elapsedRealtime();
+
+                    Timber.d("Recording into file %s", outputFile.getAbsolutePath());
+                } catch (Exception e) {
+                    Timber.e(e, "Error initializing MediaRecorder.");
+                    recordingEndedWithError(e);
+                }
+            }
+        }
+
+        private void stop() {
+            lastSegmentPath = currentSegment.getOriginalPath();
+            runOnCameraThread(() -> {
+                try {
+                    synchronized (recorderLock) {
+                        stopped = true;
+                        if (recording) {
+
+                            // stop() cannot be too soon after start()
+                            long durationFromStart = SystemClock.elapsedRealtime() - lastStartMillis;
+                            if (durationFromStart < 1000) {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    Timber.e(e, "Interrupted!");
+                                }
+                            }
+
+                            mediaRecorder.stop();
+                            mediaRecorder.reset();
+                        }
+
+                        Timber.d("Releasing media recorder");
+                        mediaRecorder.release();
+                    }
+
+                } catch (Throwable e) {
+                    Timber.e(e, "Error stopping media recorder");
+                }
+            });
+        }
+
+        @Override
+        public void onInfo(MediaRecorder mr, int what, int extra) {
+            if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
+                // this handler is already on camera thread
+                try {
+                    synchronized (recorderLock) {
+                        recording = false;
+                        mediaRecorder.stop();
+                        mediaRecorder.reset();
+                    }
+                } catch (Throwable e) {
+                    Timber.e(e, "Error stopping media recorder");
+                }
+            }
+        }
+
+        /**
+         * Since MediaRecorder.stop() is async, this method is needed to make sure the file
+         * has been properly finalized.
+         */
+        private void observeWriteEnd(final String path) {
+            this.currentFileObserver = new FileObserver(path) {
+                @Override
+                public void onEvent(int event, String ignored) {
+                    if (event == CLOSE_WRITE) {
+                        try {
+//                            if (lastSegmentPath != null && path.equals(lastSegmentPath)) {
+//                                // end the whole recording process
+//                                runOnCameraThread(() -> {
+//                                    try {
+//                                        // give itc some time to finalize things
+//                                        Thread.sleep(500);
+//                                    } catch (InterruptedException e) {
+//                                        Timber.w(e, "Interrupted!");
+//                                    }
+//
+//                                    try {
+//
+//                                    } catch (Throwable e) {
+//                                        Timber.e(e, "Error releasing recorder");
+//                                    }
+//                                }, true);
+                            if (stopped) {
+                                segmentRecorded(currentSegment);
+                                recordingEnded();
+
+                            } else {
+                                // end this segment and start a new one
+                                segmentRecorded(currentSegment);
+                                reinitRecorder();
+                            }
+                            stopWatching();
+                        } catch (Throwable e) {
+                            Timber.e(e, "Error closing the segment file");
+                        }
+                    }
+                }
+            };
+
+            this.currentFileObserver.startWatching();
+        }
     }
 
     /**
