@@ -110,10 +110,23 @@ abstract class StreamingActivity extends BaseActivity {
         if (session.isProgressing()) {
             session.endStreaming();
         } else {
+            playPauseButton.setEnabled(false);
             session.startStreaming();
         }
 
         startNextStreamlet();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (session.isProgressing()) {
+            session.endStreaming();
+        }
+
+        streamEnded = true;
+        playerService.dispose();
     }
 
     public void startNextStreamlet(){
@@ -123,6 +136,8 @@ abstract class StreamingActivity extends BaseActivity {
                 StreamingSession.Streamlet streamlet = getNextStreamlet();
                 if(streamlet != null) {
                     playerService.prepareBufferedMediaPlayer(streamlet);
+                }else{
+                    playerService.dispose();
                 }
                 firstTime = false;
             }
@@ -251,6 +266,22 @@ abstract class StreamingActivity extends BaseActivity {
             StreamingSession.Streamlet streamlet = getNextStreamlet();
             if(streamlet != null)
                 prepareBufferedMediaPlayer(streamlet);
+        }
+
+        public void dispose() {
+            try {
+                currentMediaPlayer.stop();
+                currentMediaPlayer.reset();
+            }catch (Throwable e){
+                Timber.e(e, "Error disposing current player");
+            }
+
+            try {
+                bufferedMediaPlayer.stop();
+                bufferedMediaPlayer.reset();
+            }catch (Throwable e){
+                Timber.e(e, "Error disposing buffered player");
+            }
         }
     };
 

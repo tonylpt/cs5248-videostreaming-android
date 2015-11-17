@@ -17,7 +17,7 @@ import butterknife.ButterKnife;
 public abstract class BaseActivity extends AppCompatActivity {
 
     @Override
-    protected final void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         injectActivity(component());
 

@@ -10,33 +10,30 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:background="@android:color/transparent"
-    tools:context="com.cs5248.android.ui.AboutActivity">
+    tools:context="com.cs5248.android.ui.AboutActivity"
+    >
+
+    <SurfaceView
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/player_container_live"
+        android:layout_weight="40">
+
+        <SurfaceView
+            android:layout_width="0dp"
+            android:layout_height="0dp" />
+    </RelativeLayout>
 
     <Button
         android:id="@+id/play_pause_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="10"
-
-        android:text="Play"/>
-
-    <TextView
-        android:id="@+id/title_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentTop="true"
-        android:background="@android:color/transparent"
-        android:layout_weight="10"
-
-        android:text="VOD"/>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/player_container_live"
-        android:layout_weight="80"
-
-        ></RelativeLayout>
+        android:text="Play"/>
 
 </LinearLayout>

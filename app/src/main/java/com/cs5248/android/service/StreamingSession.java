@@ -245,8 +245,16 @@ public abstract class StreamingSession {
 
             // get the segments
             MultiSegmentRepresentation oneRepr = (MultiSegmentRepresentation) reprs.get(0);
-            int firstSegmentNum = oneRepr.getFirstSegmentNum();
-            int lastSegmentNum = oneRepr.getLastSegmentNum(C.UNKNOWN_TIME_US);
+            int firstSegmentNum = 0;
+            int lastSegmentNum = 0;
+
+            try {
+                firstSegmentNum = oneRepr.getFirstSegmentNum();
+                lastSegmentNum = oneRepr.getLastSegmentNum(C.UNKNOWN_TIME_US);
+            } catch (Exception e) {
+                Timber.e(e, "Error processing MPD");
+            }
+
             int segmentCount = 0;
 
             SegmentLoop:
