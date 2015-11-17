@@ -18,6 +18,8 @@ import java.io.InputStream;
 import timber.log.Timber;
 
 /**
+ * The service used for initiating a streaming session.
+ *
  * @author lpthanh
  */
 public class StreamingService {

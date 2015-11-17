@@ -15,6 +15,8 @@ import rx.Observable;
 import timber.log.Timber;
 
 /**
+ * The service used to initiate a recording session.
+ *
  * @author lpthanh
  */
 public class RecordingService {

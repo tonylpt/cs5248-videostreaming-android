@@ -29,6 +29,9 @@ import butterknife.Bind;
 import butterknife.OnClick;
 import timber.log.Timber;
 
+/**
+ * The foundation for VOD and Live streaming activities.
+ */
 abstract class StreamingActivity extends BaseActivity {
 
     @Inject

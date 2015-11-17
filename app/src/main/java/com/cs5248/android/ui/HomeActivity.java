@@ -48,6 +48,9 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
+/**
+ * The main activity of the project.
+ */
 public class HomeActivity extends BaseActivity {
 
     private static final int REQUEST_RECORD_VIDEO = 1;

@@ -22,6 +22,8 @@ import butterknife.OnClick;
 import timber.log.Timber;
 
 /**
+ * The second step of the recording process, that performs the actual video recording and uploading.
+ *
  * @author lpthanh
  */
 public class RecordStep2 extends WizardStep<RecordingSession> {

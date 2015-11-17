@@ -25,6 +25,9 @@ import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
 /**
+ * The first step of the recording process, which is to prompt the user for a video title and
+ * create the video accordingly.
+ *
  * @author lpthanh
  */
 public class RecordStep1 extends WizardStep<RecordingSession> {

@@ -7,6 +7,9 @@ import com.cs5248.android.dagger.ApplicationComponent;
 
 import butterknife.Bind;
 
+/**
+ * The activity for viewing an on-demand video.
+ */
 public class VodPlaybackActivity extends StreamingActivity {
 
     /* some other custom things for VOD streaming */

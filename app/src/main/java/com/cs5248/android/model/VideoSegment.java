@@ -9,6 +9,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
+ * This class represents a segment in the video.
+ *
  * @author lpthanh
  */
 @ToString

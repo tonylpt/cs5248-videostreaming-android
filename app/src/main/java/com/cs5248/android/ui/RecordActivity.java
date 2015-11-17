@@ -15,6 +15,9 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 
+/**
+ * The activity for recording a video.
+ */
 public class RecordActivity extends BaseActivity {
 
     @Inject

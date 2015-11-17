@@ -11,6 +11,9 @@ import com.cs5248.android.util.BaseActivity;
 
 import butterknife.Bind;
 
+/**
+ * Activity for showing the project information.
+ */
 public class AboutActivity extends BaseActivity {
 
     @Bind(R.id.about_text)

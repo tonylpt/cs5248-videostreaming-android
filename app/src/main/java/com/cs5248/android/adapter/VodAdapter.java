@@ -15,6 +15,8 @@ import at.markushi.ui.CircleButton;
 import butterknife.Bind;
 
 /**
+ * A list adapter for on-demand video streams.
+ *
  * @author lpthanh
  */
 public class VodAdapter extends VideoAdapter {

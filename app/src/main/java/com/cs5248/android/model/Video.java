@@ -18,6 +18,9 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
+ * Model class for video. Since this can be cached in the local SQLite for faster loading when the app
+ * starts, it extends from ActiveAndroid's Model class.
+ *
  * @author lpthanh
  */
 @ToString

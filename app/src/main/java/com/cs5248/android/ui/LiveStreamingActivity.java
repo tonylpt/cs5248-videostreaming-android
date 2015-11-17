@@ -1,6 +1,5 @@
 package com.cs5248.android.ui;
 
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import com.cs5248.android.R;
@@ -8,13 +7,17 @@ import com.cs5248.android.dagger.ApplicationComponent;
 
 import butterknife.Bind;
 
+/**
+ * The activity for viewing a live stream.
+ */
 public class LiveStreamingActivity extends StreamingActivity {
 
     /* some other custom things for live streaming */
 
     @Bind(R.id.player_container_live)
     RelativeLayout playerContainer;
-    public RelativeLayout getPlayerContainer(){
+
+    public RelativeLayout getPlayerContainer() {
         return playerContainer;
     }
 

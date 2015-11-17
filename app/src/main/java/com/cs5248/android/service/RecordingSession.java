@@ -34,6 +34,8 @@ import static com.cs5248.android.service.RecordingState.NOT_STARTED;
 import static com.cs5248.android.service.RecordingState.PROGRESSING;
 
 /**
+ * This class handles all the recording logic for one video.
+ *
  * @author lpthanh
  */
 public abstract class RecordingSession {

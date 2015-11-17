@@ -15,6 +15,8 @@ import at.markushi.ui.CircleButton;
 import butterknife.Bind;
 
 /**
+ * A list adapter for Live video streams.
+ *
  * @author lpthanh
  */
 public class LiveAdapter extends VideoAdapter {

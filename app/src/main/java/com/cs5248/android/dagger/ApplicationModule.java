@@ -4,7 +4,6 @@ import android.app.Application;
 import android.content.Context;
 
 import com.cs5248.android.service.ApiService;
-import com.cs5248.android.service.CameraService;
 import com.cs5248.android.service.JobService;
 import com.cs5248.android.service.RecordingService;
 import com.cs5248.android.service.StreamingService;
@@ -36,12 +35,6 @@ public class ApplicationModule {
     @Singleton
     public ApiService provideApiService(Context context) {
         return new ApiService(context);
-    }
-
-    @Provides
-    @Singleton
-    public CameraService provideCameraService() {
-        return new CameraService();
     }
 
     @Provides

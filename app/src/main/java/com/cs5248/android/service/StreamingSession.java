@@ -46,6 +46,9 @@ import static com.cs5248.android.service.StreamingState.PROGRESSING;
 import static com.google.android.exoplayer.dash.mpd.Representation.MultiSegmentRepresentation;
 
 /**
+ * This class handles all the logic within one streaming session (of one video), including scheduling
+ * the download of each segment or the polling of the live playlist.
+ *
  * @author lpthanh
  */
 public abstract class StreamingSession {
