@@ -34,5 +34,7 @@
 
     <string name="tab_video_on_demand">Videos On Demand</string>
     <string name="tab_live_stream">Live Streams</string>
+    <string name="text_streaming"></string>
+    <string name="text_play">Play Now</string>
 
 </resources>

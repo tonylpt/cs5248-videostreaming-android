@@ -1,11 +1,7 @@
 package com.cs5248.android.ui;
 
-import android.widget.RelativeLayout;
-
 import com.cs5248.android.R;
 import com.cs5248.android.dagger.ApplicationComponent;
-
-import butterknife.Bind;
 
 /**
  * The activity for viewing an on-demand video.
@@ -32,7 +28,7 @@ public class VodPlaybackActivity extends StreamingActivity2 {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.activity_vod_playback_2;
+        return R.layout.activity_video_play;
     }
 
     @Override

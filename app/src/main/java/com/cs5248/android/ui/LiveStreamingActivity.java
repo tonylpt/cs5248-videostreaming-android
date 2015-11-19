@@ -30,7 +30,7 @@ public class LiveStreamingActivity extends StreamingActivity2 {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.activity_live_streaming_2;
+        return R.layout.activity_video_play;
     }
 
     @Override

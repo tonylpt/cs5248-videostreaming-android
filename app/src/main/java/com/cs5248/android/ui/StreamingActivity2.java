@@ -61,6 +61,9 @@ abstract class StreamingActivity2 extends BaseActivity {
     @Bind(R.id.player_surface_2)
     SurfaceView playerSurface2;
 
+    @Bind(R.id.player_surface_3)
+    SurfaceView playerSurface3;
+
 
     private ExecutorService loadExec;
 
@@ -99,7 +102,7 @@ abstract class StreamingActivity2 extends BaseActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        SurfaceView[] surfaceViews = new SurfaceView[]{playerSurface1, playerSurface2};
+        SurfaceView[] surfaceViews = new SurfaceView[]{playerSurface1, playerSurface2, playerSurface3};
         StreamletPlayer[] players = this.players = new StreamletPlayer[surfaceViews.length];
         for (int i = 0, l = players.length; i < l; ++i) {
             StreamletPlayer player = new StreamletPlayer(i, surfaceViews[i]);
@@ -398,6 +401,8 @@ abstract class StreamingActivity2 extends BaseActivity {
                 mediaPlayer.setOnCompletionListener(this);
 
                 mediaPlayer.prepare();
+                mediaPlayer.start();
+                mediaPlayer.pause();
 
                 this.videoWidth = mediaPlayer.getVideoWidth();
                 this.videoHeight = mediaPlayer.getVideoHeight();
