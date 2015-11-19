@@ -10,10 +10,11 @@ import butterknife.Bind;
 /**
  * The activity for viewing an on-demand video.
  */
-public class VodPlaybackActivity extends StreamingActivity {
+public class VodPlaybackActivity extends StreamingActivity2 {
 
     /* some other custom things for VOD streaming */
 
+    /*
 
     @Bind(R.id.player_container_vod)
     RelativeLayout playerContainer;
@@ -21,6 +22,7 @@ public class VodPlaybackActivity extends StreamingActivity {
     public RelativeLayout getPlayerContainer() {
         return playerContainer;
     }
+    */
 
 
     @Override
@@ -30,7 +32,7 @@ public class VodPlaybackActivity extends StreamingActivity {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.activity_vod_playback;
+        return R.layout.activity_vod_playback_2;
     }
 
     @Override

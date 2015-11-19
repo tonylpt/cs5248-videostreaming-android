@@ -9,6 +9,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import com.cs5248.android.R;
 import com.cs5248.android.model.Video;
@@ -22,6 +23,7 @@ import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 import javax.inject.Inject;
 
@@ -32,6 +34,13 @@ import timber.log.Timber;
 
 import static com.cs5248.android.service.StreamingSession.Streamlet;
 
+/**
+ * This is an alternative implementation of the StreamingActivity that continuously switches between
+ * two surface views instead of continuously creating new ones and destroying old ones. This was
+ * created after the course has been finalized.
+ *
+ * @author lpthanh
+ */
 abstract class StreamingActivity2 extends BaseActivity {
 
     @Inject
@@ -39,6 +48,9 @@ abstract class StreamingActivity2 extends BaseActivity {
 
     @Bind(R.id.play_pause_button)
     Button playPauseButton;
+
+    @Bind(R.id.player_surface_container)
+    LinearLayout playerSurfaceContainer;
 
     @Bind(R.id.wait_view)
     View waitView;
@@ -52,14 +64,21 @@ abstract class StreamingActivity2 extends BaseActivity {
 
     private ExecutorService loadExec;
 
-    private SurfaceView[] surfaceViews;
+    private StreamletPlayer[] players;
 
-    private LinkedList<StreamletPlayer> bufferingPlayerQueue = new LinkedList<>();
+    private final LinkedList<StreamletPlayer> bufferingPlayerQueue = new LinkedList<>();
 
     private LinkedList<StreamletPlayer> idlePlayerQueue = new LinkedList<>();
 
     private StreamingSession session;
 
+    private volatile boolean playerStarted;
+
+    private volatile String currentPlayingMedia;
+
+    private volatile String currentBufferingMedia;
+
+    private volatile boolean noMoreSegment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,9 +99,14 @@ abstract class StreamingActivity2 extends BaseActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        this.surfaceViews = new SurfaceView[]{playerSurface1, playerSurface2};
-        for (SurfaceView surface : surfaceViews) {
-            idlePlayerQueue.push(new StreamletPlayer(surface));
+        SurfaceView[] surfaceViews = new SurfaceView[]{playerSurface1, playerSurface2};
+        StreamletPlayer[] players = this.players = new StreamletPlayer[surfaceViews.length];
+        for (int i = 0, l = players.length; i < l; ++i) {
+            StreamletPlayer player = new StreamletPlayer(i, surfaceViews[i]);
+            players[i] = player;
+            idlePlayerQueue.add(player);
+
+            Timber.d("A player is ready.");
         }
 
         Video video = Util.getParcelable(this, "video", Video.class);
@@ -114,46 +138,114 @@ abstract class StreamingActivity2 extends BaseActivity {
         }
     }
 
-    private void hideWaitView() {
-        waitView.setVisibility(View.GONE);
-    }
+    @Override
+    protected void onPause() {
+        super.onPause();
 
-    private void playNextSegment() {
-        StreamletPlayer bufferingPlayer = bufferingPlayerQueue.poll();
-        if (bufferingPlayer != null) {
-            hideWaitView();
-            bufferingPlayer.play();
+        if (session.isProgressing()) {
+            session.endStreaming();
         }
 
+        for (StreamletPlayer player : players) {
+            player.dispose();
+        }
+    }
+
+    private void setWaiting(boolean isWaiting) {
+        waitView.setVisibility(isWaiting ? View.VISIBLE : View.GONE);
+    }
+
+    private void showAndPlay(StreamletPlayer player) {
+        for (StreamletPlayer p : players) {
+            if (p == player) {
+                p.show();
+                p.play();
+            } else {
+                p.hide();
+            }
+        }
+    }
+
+    private void bufferNextSegment(boolean async) {
         StreamletPlayer idlePlayer = idlePlayerQueue.poll();
         if (idlePlayer != null) {
             Streamlet streamlet = session.getNextStreamlet();
             if (streamlet != null) {
                 idlePlayer.reset();
-                (new AsyncTask<Streamlet, Void, Void>() {
+
+                /**
+                 * An inner class that can buffer a streamlet either as an AsyncTask or directly
+                 * on the current thread.
+                 */
+                class BufferTask extends AsyncTask<Streamlet, Void, Void> {
+
+                    public void bufferStreamlet(Streamlet streamlet) {
+                        idlePlayer.setStreamlet(streamlet);
+                        synchronized (bufferingPlayerQueue) {
+                            bufferingPlayerQueue.add(idlePlayer);
+                            Timber.d("playNextSegment: pushed an idle player into buffering queue, file=%s",
+                                    streamlet.getTargetFile().getAbsolutePath());
+
+                            currentBufferingMedia = idlePlayer.getCurrentMedia();
+                            updateStatus();
+                        }
+                    }
+
                     @Override
                     protected Void doInBackground(Streamlet[] streamlet) {
-                        idlePlayer.setStreamlet(streamlet[0]);
+                        bufferStreamlet(streamlet[0]);
                         return null;
                     }
-                }).executeOnExecutor(loadExec, streamlet);
-                bufferingPlayerQueue.push(idlePlayer);
+                }
+
+                BufferTask bufferTask = new BufferTask();
+                if (async) {
+                    bufferTask.executeOnExecutor(loadExec, streamlet);
+                } else {
+                    bufferTask.bufferStreamlet(streamlet);
+                }
+            } else {
+                Timber.d("No new downloaded streamlet for player %d", idlePlayer.playerId);
+            }
+        } else {
+            Timber.d("No available player for buffering");
+        }
+    }
+
+    private void playNextBuffer() {
+        synchronized (bufferingPlayerQueue) {
+            StreamletPlayer bufferingPlayer = bufferingPlayerQueue.poll();
+            if (bufferingPlayer != null) {
+                playerStarted = true;
+                setWaiting(false);
+                showAndPlay(bufferingPlayer);
+                Timber.d("playNextSegment: dequeued a player and played it");
+
+                currentPlayingMedia = bufferingPlayer.getCurrentMedia();
+                updateStatus();
+            } else {
+                Timber.d("playNextSegment: no player in buffering queue");
             }
         }
     }
 
     private void onPlayerCompleted(StreamletPlayer player, Streamlet streamlet) {
+        idlePlayerQueue.add(player);
+
+        Timber.d("Player completed file %s and has been shelved",
+                streamlet.getTargetFile().getAbsolutePath());
+
+        playNextBuffer();
+        bufferNextSegment(true);
+
         session.clearStreamlet(streamlet);
-        idlePlayerQueue.push(player);
-        player.shelve();
-        playNextSegment();
     }
 
     private void onPlayerError(StreamletPlayer player, Streamlet streamlet) {
         session.clearStreamlet(streamlet);
-        idlePlayerQueue.push(player);
-        player.shelve();
-        playNextSegment();
+        idlePlayerQueue.add(player);
+        playNextBuffer();
+        bufferNextSegment(true);
     }
 
 
@@ -166,16 +258,41 @@ abstract class StreamingActivity2 extends BaseActivity {
         // segment. Once we finish playing the segment, clean it up by:
         // session.clearStreamlet(streamlet)
 
-        playNextSegment();
+        if (playerStarted) {
+            bufferNextSegment(true);
+        } else {
+            // for the first segment, wait for the first buffer and play it
+            bufferNextSegment(false);
+            playNextBuffer();
+        }
+    }
+
+    private void onPlayerBuffered(StreamletPlayer player, Streamlet streamlet) {
+        if (!playerStarted) {
+            // this is the first segment
+            // this must happen after the first onStreamletDownloaded() call and
+            // there was no player already in buffer queue. So we call playNextSegment()
+            // again to start playing
+
+//            Timber.d("The first player has been bufferred enough. Now starting to play.");
+//            playNextBuffer();
+        }
     }
 
     private void onStreamingEnded() {
-        playPauseButton.setText("Streaming Ended");
-
-        waitView.setVisibility(View.INVISIBLE);
-        for (SurfaceView surface : surfaceViews) {
-            surface.setVisibility(View.GONE);
+        noMoreSegment = true;
+        setWaiting(false);
+        for (StreamletPlayer player : players) {
+            player.hide();
         }
+    }
+
+    private void updateStatus() {
+        runOnUiThread(() -> {
+            String status = String.format("Buffering %s | Playing %s | %s",
+                    currentBufferingMedia, currentPlayingMedia, noMoreSegment ? "END" : "");
+            playPauseButton.setText(status);
+        });
     }
 
     private class StreamletPlayer implements SurfaceHolder.Callback,
@@ -185,6 +302,8 @@ abstract class StreamingActivity2 extends BaseActivity {
 
 
         public static final int MIN_BUFFER_PERCENT = 20;
+
+        private final int playerId;
 
         private final MediaPlayer mediaPlayer = new MediaPlayer();
 
@@ -197,14 +316,19 @@ abstract class StreamingActivity2 extends BaseActivity {
         @Getter
         private Streamlet currentStreamlet;
 
-        private CountDownLatch bufferLatch;
-
-        private CountDownLatch playLatch;
+        private Semaphore playerResetingLock;
 
         @Getter
         private boolean error;
 
-        public StreamletPlayer(SurfaceView surfaceView) {
+        private int videoWidth;
+
+        private int videoHeight;
+
+        private boolean surfaceDestroyed;
+
+        public StreamletPlayer(int playerId, SurfaceView surfaceView) {
+            this.playerId = playerId;
             this.surfaceView = surfaceView;
             this.surfaceHolder = surfaceView.getHolder();
             this.surfaceHolder.addCallback(this);
@@ -212,17 +336,19 @@ abstract class StreamingActivity2 extends BaseActivity {
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
+            Timber.d("Surface is created");
             initLatch.countDown();
         }
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            // ignored
+            Timber.d("Surface is changed");
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
-            // ignored
+            surfaceDestroyed = true;
+            Timber.d("Surface is destroyed");
         }
 
         public void waitForReady() {
@@ -233,36 +359,39 @@ abstract class StreamingActivity2 extends BaseActivity {
             }
         }
 
-        public synchronized void waitForBuffer() {
-            if (bufferLatch == null) {
-                return;
-            }
-
-            try {
-                bufferLatch.await();
-            } catch (InterruptedException e) {
-                Timber.e(e, "Interrupted!");
-            }
-        }
-
         public synchronized void reset() {
             this.currentStreamlet = null;
-            this.bufferLatch = new CountDownLatch(1);
-            this.playLatch = new CountDownLatch(1);
             this.error = false;
+            if (playerResetingLock != null) {
+                playerResetingLock.release();
+            }
+
+            this.playerResetingLock = new Semaphore(0);
         }
 
         public synchronized void setStreamlet(Streamlet streamlet) {
             waitForReady();
+            if (playerResetingLock == null) {
+                throw new RuntimeException("Player Reseting Lock is null!");
+            }
 
             this.currentStreamlet = streamlet;
             File file = streamlet.getTargetFile();
 
             try {
-                MediaPlayer mediaPlayer = this.mediaPlayer;
+                if (surfaceDestroyed) {
+                    return;
+                }
 
+                MediaPlayer mediaPlayer = this.mediaPlayer;
+                mediaPlayer.reset();
                 mediaPlayer.setDataSource(file.getAbsolutePath());
-                mediaPlayer.setSurface(surfaceHolder.getSurface());
+                try {
+                    mediaPlayer.setSurface(surfaceHolder.getSurface());
+                } catch (IllegalArgumentException e) {
+                    // most probably surface has been destroyed
+                    return;
+                }
 
                 mediaPlayer.setOnBufferingUpdateListener(this);
                 mediaPlayer.setOnErrorListener(this);
@@ -270,38 +399,31 @@ abstract class StreamingActivity2 extends BaseActivity {
 
                 mediaPlayer.prepare();
 
-                playLatch.countDown();
-
-                // setting size, keeping ratio
-                int videoWidth = mediaPlayer.getVideoWidth();
-                int videoHeight = mediaPlayer.getVideoHeight();
-
-                int surfaceWidth = surfaceHolder.getSurfaceFrame().width();
-                ViewGroup.LayoutParams params = surfaceView.getLayoutParams();
-                params.width = surfaceWidth;
-                params.height = (int) (((float) videoHeight / (float) videoWidth) * (float) surfaceWidth);
-                surfaceView.setLayoutParams(params);
+                this.videoWidth = mediaPlayer.getVideoWidth();
+                this.videoHeight = mediaPlayer.getVideoHeight();
 
             } catch (Exception e) {
                 Timber.e(e, "Error setting player source to %s", file.getAbsolutePath());
                 throw new RuntimeException(e);
+            } finally {
+                playerResetingLock.release();
+
+                Timber.d("Player %d is setup for streamlet %s",
+                        playerId, streamlet.getTargetFile().getAbsolutePath());
             }
         }
 
         @Override
         public void onCompletion(MediaPlayer mp) {
-            mediaPlayer.reset();
             onPlayerCompleted(this, currentStreamlet);
         }
 
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
-            Timber.e("An error occurred while playing streamlet. What=%d", what);
+            Timber.e("Player %d: An error occurred while playing streamlet. What=%d",
+                    playerId, what);
 
-            bufferLatch.countDown();
             error = true;
-            mediaPlayer.reset();
-
             onPlayerError(this, currentStreamlet);
             return true;
         }
@@ -309,25 +431,65 @@ abstract class StreamingActivity2 extends BaseActivity {
         @Override
         public void onBufferingUpdate(MediaPlayer mp, int percent) {
             if (percent >= MIN_BUFFER_PERCENT) {
-                bufferLatch.countDown();
+                onPlayerBuffered(this, currentStreamlet);
             }
         }
 
-        public void play() {
+        public synchronized void play() {
             if (!error) {
                 try {
-                    playLatch.await();
+                    playerResetingLock.acquire();
+
+                    Timber.d("Player %d is playing streamlet: %s", playerId,
+                            currentStreamlet.getTargetFile().getAbsolutePath());
+
+                    show();
+                    mediaPlayer.start();
+
                 } catch (InterruptedException e) {
                     Timber.e(e, "Interrupted!");
                 }
-
-                surfaceView.setVisibility(View.VISIBLE);
-                mediaPlayer.start();
             }
         }
 
-        public void shelve() {
-            surfaceView.setVisibility(View.GONE);
+        public void show() {
+            int surfaceWidth = surfaceHolder.getSurfaceFrame().width();
+            ViewGroup.LayoutParams params = surfaceView.getLayoutParams();
+            params.width = surfaceWidth;
+            params.height = (int) (((float) videoHeight / (float) videoWidth) * (float) surfaceWidth);
+            surfaceView.setLayoutParams(params);
+
+//            Timber.d("Player %d is shown. Current streamlet=%s", playerId,
+//                    currentStreamlet.getTargetFile().getAbsolutePath());
+        }
+
+        public void hide() {
+            int surfaceWidth = surfaceHolder.getSurfaceFrame().width();
+            ViewGroup.LayoutParams params = surfaceView.getLayoutParams();
+            params.width = surfaceWidth;
+            params.height = 0;
+            surfaceView.setLayoutParams(params);
+
+//            Timber.d("Player %d is hidden. Current streamlet=%s", playerId,
+//                    currentStreamlet.getTargetFile().getAbsolutePath());
+        }
+
+        public String getCurrentMedia() {
+            if (currentStreamlet == null) {
+                return null;
+            }
+
+            return currentStreamlet.getMediaName();
+        }
+
+        public void dispose() {
+            if (mediaPlayer != null) {
+                try {
+                    mediaPlayer.release();
+                } catch (Exception e) {
+                    Timber.e(e, "Error releasing player %d", playerId);
+                }
+            }
         }
     }
 

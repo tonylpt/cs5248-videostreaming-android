@@ -160,7 +160,7 @@ public abstract class StreamingSession {
         synchronized (buffer) {
             // since all download jobs are executed in sequence, we can be
             // sure that the streamlet are downloaded in order.
-            buffer.push(streamlet);
+            buffer.add(streamlet);
         }
 
         StreamingListener streamingListener = getStreamingListener();

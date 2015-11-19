@@ -10,17 +10,18 @@ import butterknife.Bind;
 /**
  * The activity for viewing a live stream.
  */
-public class LiveStreamingActivity extends StreamingActivity {
+public class LiveStreamingActivity extends StreamingActivity2 {
 
     /* some other custom things for live streaming */
 
+    /*
     @Bind(R.id.player_container_live)
     RelativeLayout playerContainer;
 
     public RelativeLayout getPlayerContainer() {
         return playerContainer;
     }
-
+    */
 
     @Override
     protected void injectActivity(ApplicationComponent component) {
@@ -29,7 +30,7 @@ public class LiveStreamingActivity extends StreamingActivity {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.activity_live_streaming;
+        return R.layout.activity_live_streaming_2;
     }
 
     @Override
