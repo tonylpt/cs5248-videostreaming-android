@@ -36,8 +36,8 @@ import static com.cs5248.android.service.StreamingSession.Streamlet;
 
 /**
  * This is an alternative implementation of the StreamingActivity that continuously switches between
- * two surface views instead of continuously creating new ones and destroying old ones. This was
- * created after the course has been finalized.
+ * two or more surface views instead of continuously creating new ones and destroying old ones.
+ * This was created after the course project has been submitted and finalized.
  *
  * @author lpthanh
  */
@@ -137,6 +137,8 @@ abstract class StreamingActivity2 extends BaseActivity {
         if (session.isProgressing()) {
             session.endStreaming();
         } else {
+            playPauseButton.setText("CONNECTING...");
+            playPauseButton.setEnabled(false);
             session.startStreaming();
         }
     }
@@ -159,11 +161,10 @@ abstract class StreamingActivity2 extends BaseActivity {
     }
 
     private void showAndPlay(StreamletPlayer player) {
+        player.play();
+
         for (StreamletPlayer p : players) {
-            if (p == player) {
-                p.show();
-                p.play();
-            } else {
+            if (p != player) {
                 p.hide();
             }
         }
@@ -463,9 +464,6 @@ abstract class StreamingActivity2 extends BaseActivity {
             params.width = surfaceWidth;
             params.height = (int) (((float) videoHeight / (float) videoWidth) * (float) surfaceWidth);
             surfaceView.setLayoutParams(params);
-
-//            Timber.d("Player %d is shown. Current streamlet=%s", playerId,
-//                    currentStreamlet.getTargetFile().getAbsolutePath());
         }
 
         public void hide() {
@@ -474,9 +472,6 @@ abstract class StreamingActivity2 extends BaseActivity {
             params.width = surfaceWidth;
             params.height = 0;
             surfaceView.setLayoutParams(params);
-
-//            Timber.d("Player %d is hidden. Current streamlet=%s", playerId,
-//                    currentStreamlet.getTargetFile().getAbsolutePath());
         }
 
         public String getCurrentMedia() {
