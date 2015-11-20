@@ -7,6 +7,7 @@ import com.cs5248.android.model.VideoSegment;
 import com.cs5248.android.model.VideoStatus;
 import com.cs5248.android.model.VideoType;
 import com.cs5248.android.service.job.SegmentLiveUploadJob;
+import com.cs5248.android.service.job.StreakSegmentationJob;
 import com.cs5248.android.service.job.VideoEndJob;
 
 import java.util.Date;
@@ -129,6 +130,11 @@ public class RecordingService {
 
             // upload the segment
             jobService.submitUrgentJob(new SegmentLiveUploadJob(segment, getSegmentDuration()));
+        }
+
+        @Override
+        protected void onStreakRecorded(RecordingStreak streak) {
+            jobService.submitUrgentJob(new StreakSegmentationJob(streak));
         }
     }
 

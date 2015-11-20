@@ -34,7 +34,7 @@ public class RecordStep2 extends WizardStep<RecordingSession> {
 
     public static final int SEGMENT_DURATION = 3000;
 
-    public static final int SEGMENTS_PER_STREAK = 1;
+    public static final int SEGMENTS_PER_STREAK = 3;
 
 
     @Bind(R.id.camera_previewer)

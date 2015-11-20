@@ -26,7 +26,7 @@ public class JobService {
                 .id("urgentJobs")
                 .customLogger(new TimberJobLogger())
                 .minConsumerCount(1)
-                .maxConsumerCount(1)
+                .maxConsumerCount(2)
                 .loadFactor(1)
                 .consumerKeepAlive(120) // wait 2 minute
                 .build();
