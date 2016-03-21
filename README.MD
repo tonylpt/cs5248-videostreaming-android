@@ -51,7 +51,7 @@ This project was built on these awesome libraries:
 1. Install the latest Android Studio
 2. Install [Lombok Plugin](https://github.com/mplushnikov/lombok-intellij-plugin) in Android Studio
 3. Open the project in Android Studio by importing [build.gradle](/app/build.gradle).
-3. Update the URL of the server in[Config.java](/app/src/main/java/com/cs5248/android/Config.java)
+3. Update the URL of the server in [Config.java](/app/src/main/java/com/cs5248/android/Config.java)
 
 
 ## Run
