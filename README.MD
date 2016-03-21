@@ -16,7 +16,7 @@ The Android app is hosted [here](https://github.com/tonylpt/NUS-VideoStreaming-S
 
 During a streaming session, each video segment (streamlet) is downloaded in timely order. Depending on the downloading speed of the previous segments, a suitable quality level will be selected for the next segment to download (adaptive bitrate).
 
-The streamlets are played in sequence by alternating between SurfaceViews. In the[original implementation](/app/src/main/java/com/cs5248/android/ui/StreamingActivity.java)of the streamer, the surface views were created for each streamlet and destroyed after the streamlet ends. This created a gap between the playback of the streamlets. After the submission, I created an[improved version](/app/src/main/java/com/cs5248/android/ui/StreamingActivity2.java)of the streamer, which enhanced this behavior by reusing a set of created surface views. There is still a small gap when switching between the surface views. It still can be improved further.
+The streamlets are played in sequence by alternating between SurfaceViews. In the [original implementation](/app/src/main/java/com/cs5248/android/ui/StreamingActivity.java) of the streamer, the surface views were created for each streamlet and destroyed after the streamlet ends. This created a gap between the playback of the streamlets. After the submission, I created an [improved version](/app/src/main/java/com/cs5248/android/ui/StreamingActivity2.java) of the streamer, which enhanced this behavior by reusing a set of created surface views. There is still a small gap when switching between the surface views. It still can be improved further.
 
 
 ### Job Queue
@@ -29,14 +29,22 @@ In our implementation, we realized that during Live Streaming, any segment that 
 ### Dependencies
 
 This project was built on these awesome libraries:
-* [Dagger 2](http://google.github.io/dagger/)for dependency injection
-* [RxJava](https://github.com/ReactiveX/RxJava)and[RxAndroid](https://github.com/ReactiveX/RxAndroid)for threading and scheduling
-* [Retrofit](http://square.github.io/retrofit/)to interface with our REST API
-* [Path's Priority Job Queue](https://github.com/yigit/android-priority-jobqueue)for the job queues
-* [Parceler](https://github.com/johncarl81/parceler)for object serialization in Android
-* [Lombok](https://projectlombok.org/)to keep the code clean of Getters and Setters
-* [JakeWharton's Butterknife](https://github.com/JakeWharton/butterknife)for view injection
-* And[many others...](/app/build.gradle)
+
+* [Dagger 2](http://google.github.io/dagger/) for dependency injection
+
+* [RxJava](https://github.com/ReactiveX/RxJava) and [RxAndroid](https://github.com/ReactiveX/RxAndroid) for threading and scheduling
+
+* [Retrofit](http://square.github.io/retrofit/) to interface with our REST API
+
+* [Path's Priority Job Queue](https://github.com/yigit/android-priority-jobqueue) for the job queues
+
+* [Parceler](https://github.com/johncarl81/parceler) for object serialization in Android
+
+* [Lombok](https://projectlombok.org/) to keep the code clean of Getters and Setters
+
+* [JakeWharton's Butterknife](https://github.com/JakeWharton/butterknife) for view injection
+
+* And [many others...](/app/build.gradle)
 
 ## Build
 
