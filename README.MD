@@ -6,7 +6,7 @@ This project is part of the Systems Support for Continuous Media module in NUS. 
 
 The full requirement can be found on the [module's website](http://www.comp.nus.edu.sg/~cs5248/proj.html).
 
-The Android app is hosted [here](https://github.com/tonylpt/NUS-VideoStreaming-Server-Flask).
+The server code is hosted [here](https://github.com/tonylpt/NUS-VideoStreaming-Server-Flask).
 
 ## Implementation
 
